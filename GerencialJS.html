@@ -1,0 +1,116 @@
+<script>
+  function carregarPainelGerencial() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(renderizarDashboardGerencial)
+        .withFailureHandler(function(err) {
+          alert("Erro ao carregar dados gerenciais: " + err.message);
+        })
+        .getDadosDashboardGerencial();
+    }
+  }
+
+  function validarEExibirPainelGerencial(perfilUsuario) {
+  var painel = document.getElementById('screen-gerencial');
+  
+  if (!painel) return;
+
+  // Permite acesso apenas para perfil GERENCIAL ou ADMIN
+  if (perfilUsuario === 'Gerencial' || perfilUsuario === 'ADMIN') {
+    painel.style.display = 'block';
+    carregarPainelGerencial(); // Carrega as métricas e a tabela
+  } else {
+    painel.style.display = 'none';
+  }
+}
+
+
+
+  function salvarComissaoSubmit(e) {
+    e.preventDefault();
+    const dados = {
+      codigoUg: document.getElementById('comissao-ug').value.trim(),
+      portaria: document.getElementById('comissao-portaria').value.trim(),
+      presidente: document.getElementById('comissao-presidente').value.trim(),
+      membros: document.getElementById('comissao-membros').value.trim()
+    };
+
+    google.script.run
+      .withSuccessHandler(function() {
+        alert("Comissão Setorial gravada com sucesso!");
+        document.getElementById('form-comissao').reset();
+      })
+      .salvarComissaoSetorial(dados);
+  }
+
+  let membrosComissaoGerencial = [];
+
+function adicionarMembroGerencial() {
+  const nome = document.getElementById('gerencial-membro-nome').value.trim();
+  const email = document.getElementById('gerencial-membro-email').value.trim().toLowerCase();
+  const papel = document.getElementById('gerencial-membro-papel').value;
+
+  if (!nome || !email) {
+    alert("Preencha nome e e-mail.");
+    return;
+  }
+
+  membrosComissaoGerencial.push({ nome, email, papel });
+  document.getElementById('gerencial-membro-nome').value = '';
+  document.getElementById('gerencial-membro-email').value = '';
+  renderizarMembrosGerencial();
+}
+
+function removerMembroGerencial(index) {
+  membrosComissaoGerencial.splice(index, 1);
+  renderizarMembrosGerencial();
+}
+
+function renderizarMembrosGerencial() {
+  const tbody = document.getElementById('tbody-membros-gerencial');
+  tbody.innerHTML = '';
+  
+  if(membrosComissaoGerencial.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888;">Nenhum membro adicionado.</td></tr>';
+    return;
+  }
+
+  membrosComissaoGerencial.forEach((m, idx) => {
+    tbody.innerHTML += `
+      <tr style="border-bottom: 1px solid #eee;">
+        <td style="padding: 8px;">${m.nome}</td>
+        <td style="padding: 8px;">${m.email}</td>
+        <td style="padding: 8px;"><strong>${m.papel}</strong></td>
+        <td style="padding: 8px; text-align: center;">
+          <button onclick="removerMembroGerencial(${idx})" style="border:none; background:none; cursor:pointer;">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function salvarComissaoGerencial() {
+  const codigoUg = document.getElementById('gerencial-ug').value.trim();
+  const portaria = document.getElementById('gerencial-portaria').value.trim();
+
+  if(!codigoUg || membrosComissaoGerencial.length === 0) {
+    alert("Informe a UG e adicione pelo menos um membro.");
+    return;
+  }
+
+  const dados = { codigoUg, portaria, membros: membrosComissaoGerencial };
+
+  google.script.run
+    .withSuccessHandler(function() {
+      alert("Comissão salva com sucesso!");
+      membrosComissaoGerencial = [];
+      renderizarMembrosGerencial();
+      document.getElementById('gerencial-ug').value = '';
+      document.getElementById('gerencial-portaria').value = '';
+    })
+    .withFailureHandler(function(err) {
+      alert("Erro ao salvar: " + err.message);
+    })
+    .salvarComissaoSetorial(dados);
+}
+</script>

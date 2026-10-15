@@ -1,0 +1,435 @@
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  var screenUa = document.getElementById('screen-ua');
+  if (screenUa) screenUa.style.display = 'block';
+
+  // Obtém o contexto real do usuário antes de buscar as UAs
+  google.script.run
+    .withSuccessHandler(function(userContext) {
+      // Prioriza a Sigla (ex: CCJ) ou usa o Código (ex: 153089)
+      var ugAtiva = userContext.siglaUg || userContext.codigoUg || 'PROAD';
+      
+      // Atualiza o badge superior
+      var txtUgBadge = document.getElementById('txt-ug-badge');
+      if (txtUgBadge) txtUgBadge.innerText = 'UG ATIVA: ' + ugAtiva;
+
+      // Busca as UAs filtrando pela UG real do usuário
+      carregarUasDoUsuario(ugAtiva);
+    })
+    .withFailureHandler(function(err) {
+      console.error("Erro ao carregar contexto:", err);
+      carregarUasDoUsuario('PROAD');
+    })
+    .getUserContext();
+});
+
+function carregarUasDoUsuario(codigoUg) {
+  var grid = document.getElementById('grid-uas');
+  var txtUgBadge = document.getElementById('txt-ug-badge');
+  
+  if (txtUgBadge) txtUgBadge.innerText = 'UG ATIVA: ' + codigoUg;
+  if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--ufpe-bordo); padding: 40px; font-weight: 600;">⏳ Carregando Unidades Administrativas...</div>';
+
+  google.script.run
+    .withSuccessHandler(function(uas) {
+      todasUasCache = uas || [];
+      if (!todasUasCache || todasUasCache.length === 0) {
+        if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #721c24; padding: 40px; font-weight: 600;">⚠️ Nenhuma UA encontrada sob sua responsabilidade para a UG ' + codigoUg + '.</div>';
+        if (typeof atualizarContadoresUa === 'function') atualizarContadoresUa([]);
+        return;
+      }
+      if (typeof atualizarContadoresUa === 'function') atualizarContadoresUa(todasUasCache);
+      if (typeof renderizarGridUas === 'function') renderizarGridUas(todasUasCache);
+    })
+    .withFailureHandler(function(err) {
+      if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #dc3545; padding: 40px; font-weight: 600;">❌ Erro ao buscar UAs: ' + err.message + '</div>';
+    })
+    .getUasPorUg(codigoUg);
+}
+
+  function renderizarGridUas(lista) {
+    var grid = document.getElementById('grid-uas');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    if (lista.length === 0) {
+      grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: #888; padding: 30px;">Nenhuma UA encontrada para o filtro selecionado.</div>';
+      return;
+    }
+
+    lista.forEach(function(ua) {
+      var card = document.createElement('div');
+      card.className = 'ua-card';
+
+      var statusClasse = 'status-' + (ua.status || 'Pendente').replace(/\s+/g, '-');
+
+      card.innerHTML = `
+        <div>
+          <div class="ua-card-header">
+            <span class="code-badge">SIPAC: ${ua.codigoSipac}</span>
+            <span class="status-badge ${statusClasse}">${ua.status || 'Pendente'}</span>
+          </div>
+          <div class="ua-title">${ua.descricao}</div>
+          <div class="ua-info-item"><strong>UORG SIADS:</strong> ${ua.uorgSiads || '-'}</div>
+          <div class="ua-info-item"><strong>Membro da Comissão:</strong> ${ua.responsavel || '-'}</div>
+          
+          <div class="inventariados-box">
+            <span>Bens Inventariados:</span>
+            <span class="inventariados-number">${ua.qtdInventariada || 0}</span>
+          </div>
+        </div>
+
+        <button type="button" class="btn-select-ua" onclick="selecionarUa('${ua.codigoSipac}', '${ua.descricao.replace(/'/g, "\\'")}', '${ua.uorgSiads}', '${ua.status || 'Pendente'}')">
+          Acessar Inventário ➔
+        </button>
+      `;
+
+      grid.appendChild(card);
+    });
+  }
+
+  function atualizarContadoresUa(uas) {
+    var cTotal = uas.length;
+    var cPendente = 0, cAndamento = 0, cConcluido = 0, cSemCarga = 0;
+
+    uas.forEach(function(u) {
+      var st = u.status || 'Pendente';
+      if (st === 'Pendente') cPendente++;
+      else if (st === 'Em andamento') cAndamento++;
+      else if (st === 'Concluída' || st === 'Concluído') cConcluido++;
+      else if (st === 'Não possui carga patrimonial' || st === 'Sem carga') cSemCarga++;
+    });
+
+    if (document.getElementById('count-total')) document.getElementById('count-total').innerText = cTotal;
+    if (document.getElementById('count-pendente')) document.getElementById('count-pendente').innerText = cPendente;
+    if (document.getElementById('count-andamento')) document.getElementById('count-andamento').innerText = cAndamento;
+    if (document.getElementById('count-concluido')) document.getElementById('count-concluido').innerText = cConcluido;
+    if (document.getElementById('count-semcarga')) document.getElementById('count-semcarga').innerText = cSemCarga;
+  }
+
+  function filtrarUas() {
+    var termo = (document.getElementById('input-busca-ua').value || '').toLowerCase();
+    
+    var filtradas = todasUasCache.filter(function(ua) {
+      var bateTexto = (ua.codigoSipac || '').toLowerCase().includes(termo) ||
+                       (ua.descricao || '').toLowerCase().includes(termo) ||
+                       (ua.uorgSiads || '').toLowerCase().includes(termo);
+
+      var bateStatus = (statusFiltroAtual === 'TODAS') || (ua.status === statusFiltroAtual);
+
+      return bateTexto && bateStatus;
+    });
+
+    renderizarGridUas(filtradas);
+  }
+
+  function filtrarStatus(status, btn) {
+    statusFiltroAtual = status;
+    
+    var btns = document.querySelectorAll('.filter-pills .btn-pill');
+    btns.forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+
+    filtrarUas();
+  }
+
+  function selecionarUa(codigoSipac, nomeUa, uorgSiads, statusUa) {
+  // 1. Oculta a tela de UAs e exibe a tela de inventário do bem
+  var screenUa = document.getElementById('screen-ua');
+  var screenInv = document.getElementById('screen-inventario');
+  
+  if (screenUa) screenUa.style.display = 'none';
+  if (screenInv) screenInv.style.display = 'block';
+
+  // 2. Atualiza os títulos no topo
+  var txtNome = document.getElementById('txt-detalhe-ua-nome');
+  var txtSub = document.getElementById('txt-detalhe-ua-sub');
+  
+  if (txtNome) txtNome.innerText = codigoSipac + ' - ' + nomeUa;
+  if (txtSub) txtSub.innerText = 'SIPAC: ' + codigoSipac + ' | UORG SIADS: ' + (uorgSiads || '-');
+
+  // 3. ATUALIZAÇÃO DO STATUS: Define o valor salvo da coluna F no elemento <select>
+  var selectStatus = document.getElementById('select-status-ua');
+  if (selectStatus && statusUa) {
+    selectStatus.value = statusUa;
+  }
+
+  // 4. Dispara a busca dos bens desta UA
+  carregarBensDaUaSelecionada(codigoSipac);
+}
+
+function carregarBensDaUaSelecionada(codigoSipac) {
+  var tbody = document.getElementById('tbody-bens') || document.querySelector('#screen-inventario tbody');
+  
+  if (!tbody) {
+    console.error("Elemento <tbody> não encontrado em #screen-inventario.");
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px; color: #800000; font-weight: 600;">⏳ Carregando bens patrimoniais...</td></tr>';
+
+  google.script.run
+    .withSuccessHandler(function(bens) {
+      renderizarTabelaBens(bens);
+    })
+    .withFailureHandler(function(err) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: #dc3545; padding: 20px; font-weight: 600;">❌ Erro ao carregar os bens: ' + err.message + '</td></tr>';
+    })
+    .getBensPorUa(codigoSipac);
+}
+
+function renderizarTabelaBens(bens) {
+  var tbody = document.getElementById('tbody-bens') || document.querySelector('#screen-inventario tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (!bens || bens.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 25px; color: #666; font-size: 0.82rem; font-weight: 500;">Nenhum bem patrimonial cadastrado nesta UA.</td></tr>';
+    return;
+  }
+
+  bens.forEach(function(bem) {
+    var tr = document.createElement('tr');
+    tr.style.fontSize = '0.82rem'; // Fonte reduzida para otimizar visualização
+    tr.style.borderBottom = '1px solid #e9ecef';
+
+    tr.innerHTML = `
+      <td style="padding: 8px 10px; font-weight: 600; color: #212529;">${bem.tombamento}</td>
+      <td style="padding: 8px 10px; color: #333;">${bem.descricao}</td>
+      <td style="padding: 8px 10px; text-align: center;">${bem.qtd}</td>
+      <td style="padding: 8px 10px;">${bem.situacao}</td>
+      <td style="padding: 8px 10px; color: #555;">${bem.localidade || '-'}</td>
+      <td style="padding: 8px 10px; color: #555;">${bem.corresponsavel || '-'}</td>
+      <td style="padding: 8px 10px; white-space: nowrap; color: #666;">${bem.dataRegistro || '-'}</td>
+      <td style="padding: 8px 10px; text-align: center; white-space: nowrap;">
+        <button type="button" style="background: #28a745; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.78rem; font-weight: 600; margin-right: 4px;" onclick="editarBem('${bem.id}')">Editar</button>
+        <button type="button" style="background: #dc3545; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.78rem; font-weight: 600;" onclick="confirmarExclusaoBem('${bem.id}', '${bem.tombamento}', '${bem.codigoUa}')">Excluir</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function confirmarExclusaoBem(id, tombamento, codigoUa, rowIndex) {
+  if (confirm('Tem certeza que deseja excluir o item (' + tombamento + ')?')) {
+    // Exibe a tela de carregamento durante a remoção
+    exibirLoading("Excluindo bem do inventário...");
+
+    google.script.run
+      .withSuccessHandler(function() {
+        ocultarLoading();
+        // Recarrega a lista da UA ativa
+        carregarBensDaUaSelecionada(codigoUa);
+      })
+      .withFailureHandler(function(err) {
+        ocultarLoading();
+        alert('Erro ao excluir: ' + err.message);
+      })
+      .deletarBem(id, rowIndex);
+  }
+}
+
+// 1. Ação disparada ao clicar no botão 'Editar' da tabela
+// Função de edição atualizada com o indicador de carregamento
+function editarBem(id, rowIndex) {
+  // 1. Exibe a tela de carregamento antes da requisição ao servidor
+  exibirLoading("Carregando dados do bem...");
+
+  google.script.run
+    .withSuccessHandler(function(bem) {
+      // 2. Oculta a tela de carregamento após a resposta
+      ocultarLoading();
+
+      if (!bem) {
+        alert("Não foi possível localizar os dados do bem.");
+        return;
+      }
+      
+      // 3. Preenche e exibe o formulário de edição
+      preencherFormularioWizard(bem);
+    })
+    .withFailureHandler(function(err) {
+      // Oculta o carregamento caso ocorra algum erro no servidor
+      ocultarLoading();
+      alert("Erro ao buscar dados para edição: " + err.message);
+    })
+    .getBemPorId(id, rowIndex);
+}
+
+function preencherFormularioWizard(bem) {
+  var tituloModal = document.querySelector('#modal-novo-bem .modal-header h3');
+  if (tituloModal) tituloModal.innerText = "Editar Bem Patrimonial";
+
+  // Armazena IDs ocultos
+  document.getElementById('input-bem-id').value = bem.id || '';
+  document.getElementById('input-row-index').value = bem.rowIndex || '';
+
+  // ETAPA 1 - Tombamento / Processo
+  var radiosTomb = document.getElementsByName('possuiTombamento');
+  for (var r of radiosTomb) {
+    r.checked = (r.value === bem.possuiTombamento);
+  }
+  document.getElementById('input-num-tombamento').value = bem.numeroTombamento || '';
+
+  if (document.getElementById('selectTipoSemPlaqueta')) {
+    document.getElementById('selectTipoSemPlaqueta').value = bem.detalhamentoSemPlaqueta || '';
+  }
+  if (document.getElementById('detalhamentoOutro')) {
+    document.getElementById('detalhamentoOutro').value = bem.detalhamentoOutro || '';
+  }
+
+  var radiosProc = document.getElementsByName('possuiProcesso');
+  for (var r of radiosProc) {
+    r.checked = (r.value === bem.possuiProcesso);
+  }
+  document.getElementById('input-num-processo').value = bem.numeroProcesso || '';
+
+  // ETAPA 2 - Detalhes
+  document.getElementById('input-descricao').value = bem.descricao || '';
+  document.getElementById('select-situacao').value = bem.situacao || 'Em uso';
+  document.getElementById('input-localidade').value = bem.localidade || '';
+  document.getElementById('input-corresponsavel').value = bem.corresponsavel || '';
+
+  // Aplica as regras condicionais de exibição e a trava da quantidade
+  tratarTombamentoChange();
+  if (typeof gerenciarFluxoSemPlaqueta === 'function') gerenciarFluxoSemPlaqueta();
+  if (typeof tratarProcessoChange === 'function') tratarProcessoChange();
+
+  // Se não possuir tombamento, preserva a quantidade cadastrada no banco
+  if (bem.possuiTombamento === "NÃO") {
+    document.getElementById('input-quantidade').value = bem.qtd || 1;
+  }
+
+  resetarEtapasWizard();
+
+  var modal = document.getElementById('modal-novo-bem');
+  if (modal) modal.style.display = 'flex';
+}
+
+// 3. Reseta os botões e abas para a Etapa 1
+function resetarEtapasWizard() {
+  document.getElementById('step-1-content').style.display = 'block';
+  document.getElementById('step-2-content').style.display = 'none';
+
+  document.getElementById('pill-step-1').classList.add('active');
+  document.getElementById('pill-step-2').classList.remove('active');
+
+  document.getElementById('btn-voltar-step').style.display = 'none';
+  document.getElementById('btn-proximo-step').style.display = 'inline-block';
+  document.getElementById('btn-salvar-bem').style.display = 'none';
+}
+
+// 4. Submissão unificada (Novo Bem ou Edição)
+function salvarBemSubmit(event) {
+    if (event) event.preventDefault();
+
+    try {
+      var idBem = document.getElementById('input-bem-id') ? document.getElementById('input-bem-id').value : '';
+      var rowIndex = document.getElementById('input-row-index') ? document.getElementById('input-row-index').value : '';
+
+      var radioTomb = document.querySelector('input[name="possuiTombamento"]:checked');
+      var radioProc = document.querySelector('input[name="possuiProcesso"]:checked');
+
+      var codigoUaAtiva = "";
+      var elUaSub = document.getElementById('txt-detalhe-ua-sub');
+      if (elUaSub) {
+        var match = elUaSub.innerText.match(/SIPAC:\s*([^|]+)/i);
+        if (match && match[1]) codigoUaAtiva = match[1].trim();
+      }
+
+      var qtdInput = document.getElementById('input-quantidade') ? document.getElementById('input-quantidade').value : 1;
+      var descInput = document.getElementById('input-descricao') ? document.getElementById('input-descricao').value : '';
+
+      if (!descInput || descInput.trim() === '') {
+        avancarEtapaForm();
+        alert("Por favor, preencha a Descrição do Bem.");
+        if (document.getElementById('input-descricao')) document.getElementById('input-descricao').focus();
+        return;
+      }
+
+      var dados = {
+        id: idBem,
+        rowIndex: rowIndex,
+        codigoUa: codigoUaAtiva,
+        codigoSipacUa: codigoUaAtiva,
+        possuiTombamento: radioTomb ? radioTomb.value : "SIM",
+        numeroTombamento: document.getElementById('input-num-tombamento') ? document.getElementById('input-num-tombamento').value : '',
+        numTombamento: document.getElementById('input-num-tombamento') ? document.getElementById('input-num-tombamento').value : '',
+        detalhamentoSemPlaqueta: document.getElementById('selectTipoSemPlaqueta') ? document.getElementById('selectTipoSemPlaqueta').value : '',
+        tipoSemPlaqueta: document.getElementById('selectTipoSemPlaqueta') ? document.getElementById('selectTipoSemPlaqueta').value : '',
+        detalhamentoOutro: document.getElementById('detalhamentoOutro') ? document.getElementById('detalhamentoOutro').value : '',
+        possuiProcesso: radioProc ? radioProc.value : "NÃO",
+        numeroProcesso: document.getElementById('input-num-processo') ? document.getElementById('input-num-processo').value : '',
+        numProcesso: document.getElementById('input-num-processo') ? document.getElementById('input-num-processo').value : '',
+        descricao: descInput,
+        quantidade: qtdInput,
+        qtd: qtdInput,
+        situacao: document.getElementById('select-situacao') ? document.getElementById('select-situacao').value : 'Em uso',
+        localidade: document.getElementById('input-localidade') ? document.getElementById('input-localidade').value : '',
+        corresponsavel: document.getElementById('input-corresponsavel') ? document.getElementById('input-corresponsavel').value : ''
+      };
+
+      exibirLoading("Salvando bem no inventário...");
+
+      var handlerSucesso = function() {
+        ocultarLoading();
+        fecharModalNovoBem();
+        if (codigoUaAtiva && typeof carregarBensDaUaSelecionada === 'function') {
+          carregarBensDaUaSelecionada(codigoUaAtiva);
+        }
+      };
+
+      var handlerErro = function(err) {
+        ocultarLoading();
+        alert("Erro na operação: " + err.message);
+      };
+
+      if ((idBem && idBem.trim() !== '') || (rowIndex && rowIndex.trim() !== '')) {
+        google.script.run.withSuccessHandler(handlerSucesso).withFailureHandler(handlerErro).atualizarBem(dados);
+      } else {
+        google.script.run.withSuccessHandler(handlerSucesso).withFailureHandler(handlerErro).salvarNovoBem(dados);
+      }
+
+    } catch (err) {
+      ocultarLoading();
+      alert("Erro na submissão: " + err.message);
+    }
+  }
+
+function fecharModalEdicao() {
+  var modal = document.getElementById('modal-editar-bem');
+  if (modal) modal.style.display = 'none';
+}
+
+function salvarEdicaoBem() {
+  var dados = {
+    id: document.getElementById('edit-id').value,
+    codigoUa: document.getElementById('edit-codigo-ua').value,
+    tombamento: document.getElementById('edit-tombamento').value,
+    descricao: document.getElementById('edit-descricao').value,
+    qtd: document.getElementById('edit-qtd').value,
+    situacao: document.getElementById('edit-situacao').value,
+    localidade: document.getElementById('edit-localidade').value,
+    corresponsavel: document.getElementById('edit-corresponsavel').value
+  };
+
+  if (!dados.id) {
+    alert("Erro: ID de registro ausente.");
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function() {
+      fecharModalEdicao();
+      carregarBensDaUaSelecionada(dados.codigoUa);
+    })
+    .withFailureHandler(function(err) {
+      alert("Erro ao salvar alterações: " + err.message);
+    })
+    .atualizarBem(dados);
+}
+
+
+</script>

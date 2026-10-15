@@ -1,0 +1,145 @@
+<script>
+  let userContextGlobal = null;
+
+  document.addEventListener("DOMContentLoaded", function() {
+    carregarContextoUsuario();
+  });
+
+  function ocultarTodasAsTelas() {
+    const telas = [
+      'screen-hub-presidente',
+      'screen-atribuicao-comissao',
+      'screen-relatorio-setorial',
+      'screen-ua',
+      'screen-inventario',
+      'screen-gerencial',
+      'screen-bolsista'
+    ];
+
+    telas.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = 'none';
+        el.classList.remove('active');
+      }
+    });
+  }
+
+  function carregarContextoUsuario() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(context) {
+          userContextGlobal = context;
+
+          const perfil = (context && context.perfil ? context.perfil : '').toUpperCase().trim();
+          const emailUsuario = (context && context.email) ? context.email : 'seu e-mail';
+
+          // --- VERIFICAÇÃO DE USUÁRIO NÃO CADASTRADO ---
+          if (!context || !context.perfil || context.cadastrado === false || perfil === 'NÃO CADASTRADO' || perfil === 'NAO_CADASTRADO' || perfil === 'SEM_ACESSO' || perfil === '') {
+            ocultarTodasAsTelas();
+
+            var boxInfo = document.getElementById('box-user-info');
+            if (boxInfo) {
+              boxInfo.innerHTML = `
+                <span style="color: #d9534f;">⚠️ <strong>Acesso Negado:</strong> O e-mail <strong>${emailUsuario}</strong> não está cadastrado no sistema.</span>
+              `;
+            }
+
+            // Exibe mensagem em tela de aviso dedicada (se existir) ou via alerta
+            var telaAviso = document.getElementById('screen-nao-cadastrado');
+            if (telaAviso) {
+              telaAviso.style.display = 'block';
+            } else {
+              alert(`Atenção: O e-mail (${emailUsuario}) não está cadastrado na lista de usuários autorizados do sistema de inventário.`);
+            }
+            return; // Interrompe o carregamento das demais telas
+          }
+
+          // --- USUÁRIO CADASTRADO: EXIBE DADOS E TELA CORRESPONDENTE ---
+          const displayUg = context.siglaUg || context.codigoUg || "GERAL";
+
+          var boxInfo = document.getElementById('box-user-info');
+          if (boxInfo) {
+            boxInfo.innerHTML = `
+              <span>👤 <strong>${context.nome}</strong> (${context.perfil}) | UG: <strong>${displayUg}</strong></span>
+            `;
+          }
+
+          ocultarTodasAsTelas();
+
+          if (perfil === 'GERENCIAL' || perfil === 'ADMIN') {
+            var telaGerencial = document.getElementById('screen-gerencial');
+            if (telaGerencial) telaGerencial.style.display = 'block';
+            if (typeof carregarPainelGerencial === 'function') carregarPainelGerencial();
+
+          } else if (perfil === 'BOLSISTA') { 
+            var telaBolsista = document.getElementById('screen-bolsista');
+            if (telaBolsista) telaBolsista.style.display = 'block';
+            if (typeof validarEExibirPainelBolsista === 'function') {
+              validarEExibirPainelBolsista(perfil, context.email);
+            }
+
+          } else if (perfil === 'PRESIDENTE' || perfil === 'SUBSTITUTO') {
+            var telaPresidente = document.getElementById('screen-hub-presidente');
+            if (telaPresidente) telaPresidente.style.display = 'block';
+            if (typeof carregarUasDaUg === 'function') carregarUasDaUg(context.codigoUg);
+
+          } else {
+            // Perfil MEMBRO ou outros
+            var telaInventario = document.getElementById('screen-ua') || document.getElementById('screen-inventario');
+            
+            if (telaInventario) {
+              telaInventario.style.display = 'block';
+            } else {
+              console.error("Erro: A div 'screen-ua' (ou 'screen-inventario') não foi encontrada no HTML.");
+            }
+
+            if (typeof carregarUasDaUg === 'function') carregarUasDaUg(context.codigoUg);
+          }
+        })
+        .getCustomUserContext();
+    }
+  }
+
+  function voltarAoHubGestor() {
+    ocultarTodasAsTelas();
+    const hub = document.getElementById('screen-hub-presidente');
+    if (hub) hub.style.display = 'block';
+  }
+
+  function abrirAtribuicaoUas() {
+    ocultarTodasAsTelas();
+    document.getElementById('screen-atribuicao-comissao').style.display = 'block';
+    if (typeof inicializarModuloComissao === 'function') {
+      inicializarModuloComissao(userContextGlobal.codigoUg);
+    }
+  }
+
+  function abrirVisaoMembro(codigoSipac) {
+    ocultarTodasAsTelas();
+    var telaUa = document.getElementById('screen-ua') || document.getElementById('screen-inventario');
+    
+    if (telaUa) {
+      telaUa.style.display = 'block';
+    } else {
+      console.error("Tela do membro não foi encontrada no DOM (procure por id='screen-inventario' ou 'screen-ua').");
+      alert("Erro: A tela solicitada não foi encontrada na interface.");
+      return;
+    }
+
+    if (codigoSipac) {
+      var selectUa = document.getElementById('select-ua');
+      if (selectUa) {
+        selectUa.value = codigoSipac;
+        if (typeof carregarBensDaUaSelecionada === 'function') {
+          carregarBensDaUaSelecionada();
+        }
+      }
+    }
+  }
+
+  function abrirRelatorioFinal() {
+    ocultarTodasAsTelas();
+    document.getElementById('screen-relatorio-setorial').style.display = 'block';
+  }
+</script>

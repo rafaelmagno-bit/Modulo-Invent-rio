@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Inventário - UFPE</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <?!= include('GlobalStyles'); ?>
+</head>
+<body>
+
+  <!-- HEADER GLOBAL -->
+<header class="header-ufpe">
+  <div class="header-brand">
+    <img 
+      src="https://lh3.googleusercontent.com/d/1bZnmPQPdTPWdizza8Kh0uVYyRZSYISfr" 
+      alt="Logo UFPE" 
+      class="header-logo-img"
+    >
+    <div class="header-titles">
+      <h1>Inventário de Bens Móveis 2026</h1>
+      <p>Universidade Federal de Pernambuco</p>
+    </div>
+  </div>
+  <div class="header-user-info" id="box-user-info">
+    <span>👤 Carregando usuário...</span>
+  </div>
+</header>
+
+  <div class="container">
+    <!-- MÓDULOS DE INTERFACE CARREGADOS -->
+    <?!= include('GerencialView'); ?>
+    <?!= include('GestaoComissaoView'); ?>
+    <?!= include('InventarioView'); ?>
+    <?!= include('RelatorioView'); ?>
+    <?!= include('BolsistaView'); ?>
+  </div>
+
+  <!-- LÓGICA JAVASCRIPT CARREGADA -->
+  <?!= include('AppJS'); ?>
+  <?!= include('GerencialJS'); ?>
+  <?!= include('GestaoComissaoJS'); ?>
+  <?!= include('InventarioJS'); ?>
+  <?!= include('RelatorioJS'); ?>
+  <?!= include('BolsistaJS'); ?>
+
+</body>
+</html>

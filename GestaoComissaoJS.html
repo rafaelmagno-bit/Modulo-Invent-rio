@@ -1,0 +1,125 @@
+<script>
+  let comissaoState = {
+  codigoUg: '',
+  membros: [],
+  uas: []
+};
+
+
+function inicializarModuloComissao(codigoUg) {
+  comissaoState.codigoUg = codigoUg;
+  
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(dados) {
+        comissaoState.uas = dados.uas || [];
+        comissaoState.membros = dados.membros || [];
+        renderizarTabelaAtribuicaoUas();
+      })
+      .withFailureHandler(function(err) {
+        alert("Erro ao carregar dados da comissão: " + err.message);
+      })
+      .getDadosIniciaisGestorComissao(codigoUg);
+  }
+}
+
+function renderizarTabelaAtribuicaoUas() {
+  const tbody = document.getElementById('tbody-atribuicao-uas');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (comissaoState.uas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 15px;">Nenhuma UA encontrada para esta UG.</td></tr>';
+    return;
+  }
+
+  comissaoState.uas.forEach(ua => {
+    const isSemCarga = ua.status === 'Não possui carga patrimonial';
+    
+    // Converte os nomes gravados na Coluna G em lista para pré-marcar os checkboxes
+    const listaResponsaveisAtuais = ua.responsaveis ? ua.responsaveis.split(',').map(n => n.trim()) : [];
+
+    // Monta os checkboxes com os membros cadastrados na UG
+    let checkboxesMembros = '';
+    if (comissaoState.membros.length === 0) {
+      checkboxesMembros = '<span style="color: #999; font-size: 12px;">Nenhum membro cadastrado para esta UG.</span>';
+    } else {
+      checkboxesMembros = comissaoState.membros.map(m => {
+        const checked = listaResponsaveisAtuais.includes(m.nome) ? 'checked' : '';
+        const disabled = isSemCarga ? 'disabled' : '';
+
+        return `
+          <label style="display: block; margin-bottom: 4px; font-size: 13px; cursor: pointer;">
+            <input type="checkbox" class="chk-membro-${ua.codigoSipac}" value="${m.nome}" ${checked} ${disabled}> ${m.nome}
+          </label>
+        `;
+      }).join('');
+    }
+
+    tbody.innerHTML += `
+      <tr id="row-ua-${ua.codigoSipac}" style="border-bottom: 1px solid #eee;">
+        <td style="padding: 10px;"><strong>${ua.codigoSipac}</strong></td>
+        <td style="padding: 10px;">${ua.descricao}</td>
+        <td style="padding: 10px; text-align: center;">
+          <input type="checkbox" id="chk-sem-carga-${ua.codigoSipac}" 
+                 onchange="alternarSemCarga('${ua.codigoSipac}')" 
+                 ${isSemCarga ? 'checked' : ''} 
+                 style="transform: scale(1.2); cursor: pointer;">
+        </td>
+        <td id="cell-membros-${ua.codigoSipac}" style="padding: 10px; ${isSemCarga ? 'opacity: 0.4;' : ''}">
+          ${checkboxesMembros}
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// Bloqueia/Desbloqueia a seleção de membros caso "Sem Carga Patrimonial" seja marcado
+function alternarSemCarga(codigoSipac) {
+  const chkSemCarga = document.getElementById(`chk-sem-carga-${codigoSipac}`);
+  const celulaMembros = document.getElementById(`cell-membros-${codigoSipac}`);
+  const chksMembros = document.querySelectorAll(`.chk-membro-${codigoSipac}`);
+
+  const desabilitar = chkSemCarga.checked;
+
+  if (celulaMembros) celulaMembros.style.opacity = desabilitar ? '0.4' : '1.0';
+
+  chksMembros.forEach(chk => {
+    chk.disabled = desabilitar;
+    if (desabilitar) chk.checked = false;
+  });
+}
+
+function salvarAtribuicaoUas() {
+  const atribuicoes = [];
+
+  comissaoState.uas.forEach(ua => {
+    const chkSemCarga = document.getElementById(`chk-sem-carga-${ua.codigoSipac}`);
+    const isSemCarga = chkSemCarga ? chkSemCarga.checked : false;
+
+    const nomesSelecionados = [];
+    if (!isSemCarga) {
+      const chks = document.querySelectorAll(`.chk-membro-${ua.codigoSipac}:checked`);
+      chks.forEach(chk => nomesSelecionados.push(chk.value));
+    }
+
+    atribuicoes.push({
+      codigoSipac: ua.codigoSipac,
+      semCarga: isSemCarga,
+      membrosNomes: nomesSelecionados
+    });
+  });
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        alert(res.mensagem || "Atribuições salvas com sucesso!");
+        inicializarModuloComissao(comissaoState.codigoUg); // Recarrega os dados atualizados
+      })
+      .withFailureHandler(function(err) {
+        alert("Erro ao salvar atribuições: " + err.message);
+      })
+      .salvarEstruturaComissao(comissaoState.codigoUg, atribuicoes);
+  }
+}
+</script>

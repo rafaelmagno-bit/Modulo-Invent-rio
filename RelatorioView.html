@@ -1,0 +1,86 @@
+<div id="screen-relatorio" class="screen-panel" style="display: none;">
+  <!-- Cabeçalho do Relatório Setorial -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <h2 style="margin: 0; color: #800000; font-size: 20px;">Relatório de Levantamento Setorial</h2>
+      <p style="margin: 5px 0 0 0; color: #666; font-size: 13px;">Consolidação e fechamento do inventário da Unidade Gestora.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="carregarDadosRelatorio()" class="btn-principal" style="background-color: #0056b3; font-size: 13px;">
+        🔄 Atualizar Relatório
+      </button>
+    </div>
+  </div>
+
+  <!-- Resumo de Status das UAs -->
+  <div style="margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 6px; border: 1px solid #e0e0e0;">
+    <h3 style="margin-top: 0; font-size: 15px; color: #333;">Resumo das Unidades Administrativas (UAs)</h3>
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+        <thead>
+          <tr style="background-color: #e9ecef; color: #495057;">
+            <th style="padding: 10px;">Código SIPAC</th>
+            <th style="padding: 10px;">Unidade Administrativa</th>
+            <th style="padding: 10px; text-align: center;">Status</th>
+            <th style="padding: 10px; text-align: right;">Total de Bens</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-relatorio-uas">
+          <tr>
+            <td colspan="4" style="padding: 20px; text-align: center; color: #888;">Carregando relatório da UG...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  function carregarDadosRelatorio() {
+    var tbody = document.getElementById('tabela-relatorio-uas');
+    tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #888;">Gerando relatório setorial...</td></tr>';
+
+    if (typeof userContext === 'undefined' || !userContext.codigoUg) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #dc3545;">Código da UG não identificado.</td></tr>';
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(renderizarRelatorioUg)
+      .withFailureHandler(function(err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #dc3545;">Erro ao gerar relatório: ' + err.message + '</td></tr>';
+      })
+      .obterDadosRelatorioUg(userContext.codigoUg);
+  }
+
+  function renderizarRelatorioUg(res) {
+    var tbody = document.getElementById('tabela-relatorio-uas');
+    tbody.innerHTML = '';
+
+    if (!res || !res.listaUas || res.listaUas.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #888;">Nenhuma UA encontrada para esta UG.</td></tr>';
+      return;
+    }
+
+    res.listaUas.forEach(function(ua) {
+      var tr = document.createElement('tr');
+      tr.style.borderBottom = '1px solid #eee';
+
+      var badgeCor = ua.status === 'Concluída' ? 'background: #d4edda; color: #155724;' : 
+                       ua.status === 'Em andamento' ? 'background: #fff3cd; color: #856404;' : 
+                       'background: #f8d7da; color: #721c24;';
+
+      tr.innerHTML = 
+        '<td style="padding: 10px; font-weight: 600;">' + ua.codigoSipac + '</td>' +
+        '<td style="padding: 10px;">' + ua.nomeUa + '</td>' +
+        '<td style="padding: 10px; text-align: center;">' +
+          '<span style="padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; ' + badgeCor + '">' +
+            ua.status +
+          '</span>' +
+        '</td>' +
+        '<td style="padding: 10px; text-align: right; font-weight: 600;">' + ua.totalBens + '</td>';
+
+      tbody.appendChild(tr);
+    });
+  }
+</script>

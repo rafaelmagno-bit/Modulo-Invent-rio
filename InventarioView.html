@@ -1,0 +1,1106 @@
+<!-- ESTILOS EXCLUSIVOS DO INVENTÁRIO E DO MODAL -->
+<style>
+:root {
+      --ufpe-bordo: #990000;
+      --ufpe-bordo-dark: #7a0000;
+      --ufpe-bordo-light: #b31b2c;
+      --ufpe-bordo-soft: #fbf2f3;
+      --ufpe-preto: #1a1a1a;
+      --ufpe-cinza-escuro: #333333;
+      --ufpe-cinza-medio: #666666;
+      --ufpe-cinza-claro: #e2e8f0;
+      --ufpe-bg-light: #f4f6f8;
+      --ufpe-dourado: #c59b27;
+      
+      --status-pendente-bg: #fff3cd;
+      --status-pendente-text: #856404;
+      --status-andamento-bg: #e2f0fb;
+      --status-andamento-text: #0c5460;
+      --status-concluido-bg: #d4edda;
+      --status-concluido-text: #155724;
+      --status-semcarga-bg: #e9ecef;
+      --status-semcarga-text: #495057;
+
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-md: 0 4px 12px rgba(153,0,0,0.06);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition: all 0.2s ease-in-out;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Trebuchet MS', 'Inter', sans-serif;
+      background-color: var(--ufpe-bg-light);
+      color: var(--ufpe-cinza-escuro);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+
+    /* HEADER */
+    .header-ufpe {
+      background: linear-gradient(135deg, var(--ufpe-bordo) 0%, var(--ufpe-bordo-dark) 100%);
+      color: #ffffff;
+      padding: 16px 32px;
+      box-shadow: 0 4px 15px rgba(122, 0, 0, 0.25);
+      border-bottom: 4px solid var(--ufpe-dourado);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-brand { display: flex; align-items: center; gap: 16px; }
+    .header-logo {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .header-titles h1 { font-size: 1.25rem; font-weight: 700; }
+    .header-titles p { font-size: 0.85rem; color: #fef9e7; }
+    .header-user-info {
+      font-size: 0.85rem;
+      background: rgba(0, 0, 0, 0.25);
+      padding: 8px 16px;
+      border-radius: 20px;
+    }
+
+    .container { max-width: 1200px; margin: 24px auto; padding: 0 20px; }
+
+    /* UG CARD */
+    .ug-summary-card {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+      border-left: 6px solid var(--ufpe-bordo);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .ug-badge {
+      display: inline-block;
+      background: var(--ufpe-bordo-soft);
+      color: var(--ufpe-bordo);
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      margin-bottom: 6px;
+    }
+
+    .stats-group { display: flex; gap: 12px; flex-wrap: wrap; }
+    .stat-pill {
+      background: var(--ufpe-bg-light);
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      border: 1px solid var(--ufpe-cinza-claro);
+      min-width: 90px;
+    }
+    .stat-number { font-size: 1.3rem; font-weight: 700; color: var(--ufpe-bordo); }
+    .stat-label { font-size: 0.7rem; color: var(--ufpe-cinza-medio); text-transform: uppercase; font-weight: 600; }
+
+    /* FILTROS */
+    .filter-section {
+      background: #ffffff;
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--ufpe-cinza-claro);
+      display: flex;
+      gap: 16px;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-box { flex: 1; min-width: 260px; position: relative; }
+    .search-input {
+      width: 100%;
+      padding: 10px 16px 10px 38px;
+      border: 1.5px solid var(--ufpe-cinza-claro);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .search-input:focus { border-color: var(--ufpe-bordo); }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--ufpe-cinza-medio); }
+
+    .filter-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn-pill {
+      background: var(--ufpe-bg-light);
+      border: 1px solid var(--ufpe-cinza-claro);
+      padding: 8px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-pill.active { background: var(--ufpe-bordo); color: #ffffff; border-color: var(--ufpe-bordo); }
+
+    /* UA GRID */
+    .ua-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 20px; }
+    .ua-card {
+      background: #ffffff;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--ufpe-cinza-claro);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .ua-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--ufpe-bordo); }
+
+    .ua-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; gap: 8px; }
+    .code-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--ufpe-bordo);
+      background: var(--ufpe-bordo-soft);
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .status-badge { font-size: 0.72rem; font-weight: 700; padding: 4px 8px; border-radius: 12px; text-transform: uppercase; }
+
+    .status-Pendente { background: var(--status-pendente-bg); color: var(--status-pendente-text); }
+    .status-Em-andamento { background: var(--status-andamento-bg); color: var(--status-andamento-text); }
+    .status-Concluída { background: var(--status-concluido-bg); color: var(--status-concluido-text); }
+    .status-Não-possui-carga-patrimonial { background: var(--status-semcarga-bg); color: var(--status-semcarga-text); }
+
+    .ua-title { font-size: 1.05rem; font-weight: 700; color: var(--ufpe-preto); margin-bottom: 12px; }
+    .ua-info-item { font-size: 0.85rem; color: var(--ufpe-cinza-medio); margin-bottom: 6px; }
+
+    .inventariados-box {
+      background: var(--ufpe-bg-light);
+      border: 1px solid var(--ufpe-cinza-claro);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      margin: 12px 0;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .inventariados-number { color: var(--ufpe-bordo); font-size: 1.1rem; font-weight: 700; }
+
+    .btn-select-ua {
+      width: 100%;
+      background: var(--ufpe-bordo);
+      color: #ffffff;
+      border: none;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .btn-select-ua:hover { background: var(--ufpe-bordo-dark); }
+
+    .screen-panel { display: none; }
+    .screen-panel.active { display: block; }
+
+    .status-selector-box {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--ufpe-dourado);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    /* Estilização do botão Voltar (combinando com o tom vinho do cabeçalho) */
+.btn-back-inv {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  color: #8B0000; /* Vinho institucional UFPE */
+  border: 1.5px solid #8B0000;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin-bottom: 12px;
+}
+
+/* Efeito Hover (ao passar o mouse) */
+.btn-back-inv:hover {
+  background-color: #8B0000;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(139, 0, 0, 0.2);
+}
+
+/* Efeito ao clicar */
+.btn-back-inv:active {
+  transform: scale(0.98);
+}
+
+    .btn-add-bem {
+      background: #2e7d32;
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-add-bem:hover { background: #1b5e20; }
+
+    /* TABELA */
+    .table-container {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--ufpe-cinza-claro);
+      overflow-x: auto;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .custom-table th {
+      background: var(--ufpe-bordo-soft);
+      color: var(--ufpe-bordo);
+      padding: 12px 14px;
+      font-weight: 700;
+      border-bottom: 2px solid var(--ufpe-cinza-claro);
+      white-space: nowrap;
+    }
+
+    .custom-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--ufpe-cinza-claro);
+    }
+
+    /* MODAL WIZARD */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-backdrop.active { display: flex; }
+
+    .modal-content {
+      background: #ffffff;
+      border-radius: var(--radius-lg);
+      padding: 28px;
+      width: 100%;
+      max-width: 620px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--ufpe-bordo-soft);
+      padding-bottom: 10px;
+    }
+
+    .wizard-steps-indicator {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: var(--ufpe-bg-light);
+      padding: 8px;
+      border-radius: var(--radius-md);
+    }
+
+    .wizard-step-pill {
+      flex: 1;
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 6px;
+      border-radius: var(--radius-sm);
+      color: var(--ufpe-cinza-medio);
+      background: transparent;
+    }
+
+    .wizard-step-pill.active {
+      background: var(--ufpe-bordo);
+      color: #ffffff;
+    }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-weight: 700; font-size: 0.85rem; margin-bottom: 6px; color: var(--ufpe-preto); }
+    .form-control {
+      width: 100%;
+      padding: 10px;
+      border: 1.5px solid var(--ufpe-cinza-claro);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--ufpe-bordo); }
+
+    .radio-group {
+      display: flex;
+      gap: 20px;
+      margin-top: 6px;
+    }
+
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .conditional-box {
+      background: #fdf8f8;
+      border: 1.5px dashed var(--ufpe-bordo-light);
+      padding: 16px;
+      border-radius: var(--radius-md);
+      margin-top: 12px;
+    }
+
+    .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+
+    /* CARDS DE PLAQUETA & LUPA */
+    .plaqueta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+    }
+
+    .plaqueta-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 10px 8px;
+      cursor: pointer;
+      background: #fff;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .plaqueta-card:hover {
+      border-color: var(--ufpe-bordo);
+      background-color: #fdf6f6;
+    }
+
+    .plaqueta-card.active {
+      border-color: var(--ufpe-bordo);
+      background-color: #f8e9eb;
+      box-shadow: 0 2px 6px rgba(128, 0, 0, 0.15);
+    }
+
+    .plaqueta-card input[type="radio"] {
+      margin-right: 8px;
+      accent-color: var(--ufpe-bordo);
+    }
+
+    .card-info {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    .card-tag {
+      font-size: 0.65rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #777;
+    }
+
+    .card-info strong {
+      font-size: 0.82rem;
+      color: #222;
+    }
+
+    .card-info small {
+      font-size: 0.72rem;
+      color: #666;
+    }
+
+    .btn-lupa {
+      background: #f0f0f0;
+      border: 1px solid #ccc;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+      margin-left: 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-lupa:hover {
+      background: var(--ufpe-bordo);
+      color: #fff;
+      border-color: var(--ufpe-bordo);
+      transform: scale(1.1);
+    }
+
+    /* MODAL FOTO OVERLAY */
+    .modal-foto-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+    }
+
+    .modal-foto-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 450px;
+      width: 100%;
+      position: relative;
+      animation: fadeInModal 0.25s ease;
+    }
+
+    .modal-foto-close {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    @keyframes fadeInModal {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* BOTÕES DE AÇÃO NA TABELA */
+    .actions-cell {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .btn-action {
+      border: none;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: var(--transition);
+    }
+
+    .btn-action-edit {
+      background-color: #e2f0fb;
+      color: #0c5460;
+    }
+    .btn-action-edit:hover { background-color: #b8dcf8; }
+
+    .btn-action-delete {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .btn-action-delete:hover { background-color: #f5c6cb; }
+
+    /* BOTÃO DE RELATÓRIO DESTACADO NO HEADER */
+    .btn-principal {
+      background: linear-gradient(135deg, var(--ufpe-dourado) 0%, #9e7a1b 100%);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      padding: 9px 18px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      transition: all 0.25s ease-in-out;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-principal:hover {
+      background: linear-gradient(135deg, #d8aa2b 0%, var(--ufpe-dourado) 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(197, 155, 39, 0.4);
+    }
+
+    .btn-principal:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+</style>
+
+<!-- TELA 1: LISTA DE UAs (VISÃO DO MEMBRO) -->
+  <section id="screen-ua" class="screen-panel">
+    <div class="btn-voltar-hub-container" style="display: none; margin-bottom: 15px;">
+      <button type="button" onclick="voltarAoHubGestor()" style="background: #f8f9fa; border: 1px solid #ccc; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: 600; color: #444;">
+        ⬅ Voltar ao Menu Principal
+      </button>
+    </div>
+
+    <div class="ug-summary-card">
+      <div>
+        <span class="ug-badge" id="txt-ug-badge">UG ATIVA: -</span>
+        <h2 id="txt-ug-nome">Unidades Administrativas da UG</h2>
+        <p style="color: var(--ufpe-cinza-medio); font-size: 0.9rem;">Selecione a UA para realizar a conferência e alteração de status.</p>
+      </div>
+      
+      <div class="stats-group">
+        <div class="stat-pill"><div class="stat-number" id="count-total">0</div><div class="stat-label">Total</div></div>
+        <div class="stat-pill"><div class="stat-number" id="count-pendente" style="color: var(--status-pendente-text);">0</div><div class="stat-label">Pendente</div></div>
+        <div class="stat-pill"><div class="stat-number" id="count-andamento" style="color: var(--status-andamento-text);">0</div><div class="stat-label">Andamento</div></div>
+        <div class="stat-pill"><div class="stat-number" id="count-concluido" style="color: #2e7d32;">0</div><div class="stat-label">Concluída</div></div>
+        <div class="stat-pill"><div class="stat-number" id="count-semcarga" style="color: #495057;">0</div><div class="stat-label">Sem Carga</div></div>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="input-busca-ua" class="search-input" placeholder="Buscar por Nome da UA, Código SIPAC ou SIADS..." oninput="filtrarUas()">
+      </div>
+
+      <div class="filter-pills">
+        <button class="btn-pill active" onclick="filtrarStatus('TODAS', this)">Todas</button>
+        <button class="btn-pill" onclick="filtrarStatus('Pendente', this)">Pendentes</button>
+        <button class="btn-pill" onclick="filtrarStatus('Em andamento', this)">Em Andamento</button>
+        <button class="btn-pill" onclick="filtrarStatus('Concluída', this)">Concluídas</button>
+        <button class="btn-pill" onclick="filtrarStatus('Não possui carga patrimonial', this)">Não possui carga</button>
+      </div>
+    </div>
+
+    <div id="grid-uas" class="ua-grid">
+      <div style="grid-column: 1/-1; text-align: center; color: var(--ufpe-bordo); padding: 40px; font-weight: 600;">
+        ⏳ Carregando Unidades Administrativas...
+      </div>
+    </div>
+  </section>
+
+<!-- TELA 2: INVENTÁRIO DA UA (OCULTA INICIALMENTE) -->
+<section id="screen-inventario" class="screen-panel" style="display: none;">
+  <button class="btn-back-inv" onclick="voltarParaUas()">← Voltar para lista de UAs</button>
+
+  <div class="status-selector-box">
+    <div>
+      <h2 id="txt-detalhe-ua-nome" style="color: var(--ufpe-preto, #1a1a1a); font-size: 1.2rem;">Nome da UA</h2>
+      <p id="txt-detalhe-ua-sub" style="color: var(--ufpe-cinza-medio, #666666); font-size: 0.85rem;">SIPAC: - | UORG SIADS: -</p>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <div>
+        <label for="select-status-ua" style="font-weight: 700; font-size: 0.85rem; display: block;">Status do Inventário:</label>
+        <select id="select-status-ua" style="padding: 8px 12px; border-radius: 6px; font-weight: 600; border: 1px solid var(--ufpe-cinza-claro, #e2e8f0);" onchange="if(typeof alterarStatusUaAtiva === 'function') alterarStatusUaAtiva(this.value)">
+          <option value="Pendente">🟡 Pendente</option>
+          <option value="Em andamento">🔵 Em andamento</option>
+          <option value="Concluída">🟢 Concluída</option>
+          <option value="Não possui carga patrimonial">⚪ Não possui carga patrimonial</option>
+        </select>
+      </div>
+
+      <button class="btn-add-bem" onclick="abrirModalNovoBem()">
+        ➕ Adicionar Novo Bem
+      </button>
+    </div>
+  </div>
+
+  <div class="tabela-container">
+  <table class="tabela-bens" style="width: 100%; border-collapse: collapse;">
+    <thead style="background-color: #fce8e6; color: #800000; font-size: 0.83rem;">
+  <tr>
+    <th style="padding: 8px 10px; text-align: left;">Tombamento / Processo</th>
+    <th style="padding: 8px 10px; text-align: left;">Descrição do Bem</th>
+    <th style="padding: 8px 10px; text-align: center;">Qtd</th>
+    <th style="padding: 8px 10px; text-align: left;">Situação</th>
+    <th style="padding: 8px 10px; text-align: left;">Localidade</th>
+    <th style="padding: 8px 10px; text-align: left;">Corresponsável</th>
+    <th style="padding: 8px 10px; text-align: left;">Data/Hora Registro</th>
+    <th style="padding: 8px 10px; text-align: center;">Ações</th>
+  </tr>
+</thead>
+    <tbody id="tbody-bens">
+      <!-- Linhas de bens serão injetadas aqui dinamicamente -->
+    </tbody>
+  </table>
+</div>
+</section>
+
+<!-- MODAL FORMULÁRIO EM 2 ETAPAS -->
+<div class="modal-backdrop" id="modal-novo-bem">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="color: var(--ufpe-bordo, #990000); margin: 0;">Cadastrar Novo Bem</h3>
+      <button type="button" onclick="fecharModalNovoBem()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer;">✖</button>
+    </div>
+
+    <div class="wizard-steps-indicator">
+      <div class="wizard-step-pill active" id="pill-step-1">1. Tombamento / Processo</div>
+      <div class="wizard-step-pill" id="pill-step-2">2. Detalhes do Bem</div>
+    </div>
+
+    <form id="form-novo-bem" onsubmit="salvarBemSubmit(event)">
+      <input type="hidden" id="input-row-index" value="">
+      <input type="hidden" id="input-bem-id" value="">
+      
+      <!-- ETAPA 1 -->
+      <div id="step-1-content">
+        <div class="form-group">
+          <label>O bem possui número de tombamento da UFPE? *</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="possuiTombamento" value="SIM" onchange="tratarTombamentoChange()" required> SIM
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="possuiTombamento" value="NÃO" onchange="tratarTombamentoChange()"> NÃO
+            </label>
+          </div>
+        </div>
+
+        <div id="box-tombamento-sim" style="display: none; margin-top: 15px;">
+          <div class="form-group">
+            <label for="input-num-tombamento">Número do Tombamento / Patrimônio *</label>
+            <input type="text" id="input-num-tombamento" class="form-control" placeholder="Digite o número do tombamento">
+          </div>
+        </div>
+
+        <div id="containerTipoSemPlaqueta" style="display: none; margin-top: 15px;">
+          <label class="form-label" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 6px;">Classificação do bem sem tombamento:</label>
+          <select id="selectTipoSemPlaqueta" class="form-control" onchange="gerenciarFluxoSemPlaqueta()">
+            <option value="">-- Selecione uma opção --</option>
+            <option value="Bem da UFPE sem plaqueta (plaqueta caiu ou nunca foi etiquetado)">Bem da UFPE sem plaqueta (plaqueta caiu ou nunca foi etiquetado)</option>
+            <option value="Particular">Particular</option>
+            <option value="Terceiro">Terceiro</option>
+            <option value="Projeto de Pesquisa não finalizado">Projeto de Pesquisa não finalizado</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+
+        <div id="containerOutroDetalhamento" style="display: none; margin-top: 15px;">
+          <label for="detalhamentoOutro" class="form-label" style="font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 6px;">Detalhamento do Outro:</label>
+          <input type="text" id="detalhamentoOutro" class="form-control" placeholder="Especifique a situação do bem...">
+        </div>
+
+        <div id="box-tombamento-nao" class="conditional-box" style="display: none;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label>Há processo em andamento com a solicitação de tombamento? *</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input type="radio" name="possuiProcesso" value="SIM" onchange="tratarProcessoChange()"> SIM
+              </label>
+              <label class="radio-option">
+                <input type="radio" name="possuiProcesso" value="NÃO" onchange="tratarProcessoChange()"> NÃO
+              </label>
+            </div>
+          </div>
+
+          <div id="box-processo-sim" style="display: none; margin-top: 14px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label for="input-num-processo">Número do Processo *</label>
+              <input type="text" id="input-num-processo" class="form-control" placeholder="Ex: 23076.012345/2024-89">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 2 -->
+      <div id="step-2-content" style="display: none;">
+        <div class="form-group">
+          <label for="input-descricao">Descrição do Bem *</label>
+          <textarea id="input-descricao" class="form-control" rows="3" placeholder="Ex: Cadeira Giratória Executiva com Braços Reguláveis, Cor Preta" style="resize: vertical;"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="input-quantidade">Quantidade *</label>
+          <input type="number" id="input-quantidade" class="form-control" min="1" value="1" required>
+        </div>
+
+        <div class="form-group">
+          <label for="select-situacao">Situação do Bem *</label>
+          <select id="select-situacao" class="form-control">
+            <option value="Em uso">Em uso</option>
+            <option value="Ocioso">Ocioso</option>
+            <option value="Antieconômico">Antieconômico</option>
+            <option value="Recuperável">Recuperável</option>
+            <option value="Irrecuperável">Irrecuperável</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="input-localidade">Localidade / Sala *</label>
+          <input type="text" id="input-localidade" class="form-control" placeholder="Ex: Sala 102, Corredor B, Laboratório 3">
+        </div>
+
+        <div class="form-group">
+          <label for="input-corresponsavel">Nome do Corresponsável *</label>
+          <input type="text" id="input-corresponsavel" class="form-control" list="lista-servidores" placeholder="Informe o nome do corresponsável pelo bem" autocomplete="off">
+          <datalist id="lista-servidores"></datalist>
+        </div>
+      </div>
+
+      <!-- RODAPÉ DE AÇÕES DO MODAL (FORA DAS ETAPAS) -->
+      <div class="modal-actions" style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px; pt-3; border-top: 1px solid var(--ufpe-cinza-claro);">
+        <button type="button" class="btn-back-inv" id="btn-voltar-step" onclick="voltarEtapaForm()" style="display: none; margin: 0;">← Voltar</button>
+        <div style="margin-left: auto; display: flex; gap: 10px;">
+          <button type="button" class="btn-back-inv" onclick="fecharModalNovoBem()" style="margin: 0;">Cancelar</button>
+          <button type="button" class="btn-add-bem" id="btn-proximo-step" onclick="avancarEtapaForm()" style="display: inline-flex;">Próxima Etapa ➔</button>
+          <button type="submit" class="btn-add-bem" id="btn-salvar-bem" style="display: none; background: #2e7d32;">Salvar Bem no Inventário 💾</button>
+        </div>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<!-- Modal de Edição de Bem -->
+<div id="modal-editar-bem" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="background: #fff; width: 90%; max-width: 500px; padding: 20px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+    <h3 style="margin-top: 0; color: #800000; font-size: 1.1rem; border-bottom: 2px solid #fce8e6; padding-bottom: 8px;">Editar Bem Patrimonial</h3>
+    
+    <input type="hidden" id="edit-id">
+    <input type="hidden" id="edit-codigo-ua">
+
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px; font-size: 0.85rem;">
+      <div>
+        <label style="font-weight: 600; display: block; margin-bottom: 3px;">Tombamento / Processo:</label>
+        <input type="text" id="edit-tombamento" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+      </div>
+
+      <div>
+        <label style="font-weight: 600; display: block; margin-bottom: 3px;">Descrição do Bem:</label>
+        <input type="text" id="edit-descricao" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <div style="flex: 1;">
+          <label style="font-weight: 600; display: block; margin-bottom: 3px;">Quantidade:</label>
+          <input type="number" id="edit-qtd" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+        </div>
+        <div style="flex: 2;">
+          <label style="font-weight: 600; display: block; margin-bottom: 3px;">Situação:</label>
+          <select id="edit-situacao" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+            <option value="Em uso">Em uso</option>
+            <option value="Ocioso">Ocioso</option>
+            <option value="Recuperável">Recuperável</option>
+            <option value="Antieconômico">Antieconômico</option>
+            <option value="Irrecuperável">Irrecuperável</option>
+            <option value="Pendente">Pendente</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label style="font-weight: 600; display: block; margin-bottom: 3px;">Localidade:</label>
+        <input type="text" id="edit-localidade" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+      </div>
+
+      <div>
+        <label style="font-weight: 600; display: block; margin-bottom: 3px;">Corresponsável:</label>
+        <input type="text" id="edit-corresponsavel" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+      </div>
+    </div>
+
+    <div style="margin-top: 20px; text-align: right; gap: 8px; display: flex; justify-content: flex-end;">
+      <button type="button" onclick="fecharModalEdicao()" style="background: #6c757d; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;">Cancelar</button>
+      <button type="button" onclick="salvarEdicaoBem()" style="background: #28a745; color: #fff; border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">Salvar Alterações</button>
+    </div>
+  </div>
+</div>
+
+<!-- Overlay de Carregamento Global -->
+<div id="loading-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 2000; justify-content: center; align-items: center;">
+  <div style="background: #fff; color: #333; padding: 20px 30px; border-radius: 8px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.25);">
+    <div style="font-size: 1.8rem; margin-bottom: 8px; animation: spin 1s linear infinite;">⏳</div>
+    <div id="loading-texto" style="font-weight: 600; font-size: 0.88rem; color: #800000;">Carregando dados do bem...</div>
+  </div>
+</div>
+
+<!-- SCRIPTS DE NAVEGAÇÃO E MODAL INTEGRADOS -->
+<!-- SCRIPTS DE NAVEGAÇÃO E MODAL INTEGRADOS -->
+<script>
+  function voltarParaUas() {
+    var screenInv = document.getElementById('screen-inventario');
+    var screenUas = document.getElementById('screen-ua'); // Corrigido de 'screen-uas' para 'screen-ua'
+    if (screenInv) screenInv.style.display = 'none';
+    if (screenUas) screenUas.style.display = 'block';
+  }
+
+  // --- ABERTURA E FECHAMENTO DO MODAL ---
+  function abrirModalNovoBem() {
+  var modal = document.getElementById('modal-novo-bem');
+  if (modal) {
+    modal.style.display = ''; // Remove qualquer display inline herdado
+    modal.classList.add('active');
+  }
+  
+  // Limpa o formulário para garantir que seja um "Novo Bem"
+  var form = document.getElementById('form-novo-bem');
+  if (form) form.reset();
+
+  var inputId = document.getElementById('input-bem-id');
+  if (inputId) inputId.value = '';
+
+  var inputRow = document.getElementById('input-row-index');
+  if (inputRow) inputRow.value = '';
+
+  var tituloModal = document.querySelector('#modal-novo-bem .modal-header h3');
+  if (tituloModal) tituloModal.innerText = "Cadastrar Novo Bem";
+
+  if (typeof ocultarTodosContainersCondicionais === 'function') {
+    ocultarTodosContainersCondicionais();
+  }
+  
+  voltarEtapaForm();
+}
+
+function fecharModalNovoBem() {
+  var modal = document.getElementById('modal-novo-bem');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+
+  // --- NAVEGAÇÃO E VALIDAÇÃO DAS ETAPAS ---
+  function avancarEtapaForm() {
+    // Validação obrigatória da Etapa 1
+    var radioTomb = document.querySelector('input[name="possuiTombamento"]:checked');
+    if (!radioTomb) {
+      alert("Por favor, selecione se o bem possui número de tombamento.");
+      return;
+    }
+
+    if (radioTomb.value === "SIM") {
+      var numTomb = document.getElementById('input-num-tombamento') ? document.getElementById('input-num-tombamento').value : '';
+      if (!numTomb || numTomb.trim() === '') {
+        alert("Por favor, preencha o número de tombamento.");
+        if (document.getElementById('input-num-tombamento')) document.getElementById('input-num-tombamento').focus();
+        return;
+      }
+    } else {
+      var selectSemPlaqueta = document.getElementById('selectTipoSemPlaqueta') ? document.getElementById('selectTipoSemPlaqueta').value : '';
+      if (!selectSemPlaqueta) {
+        alert("Por favor, selecione a classificação do bem sem tombamento.");
+        return;
+      }
+    }
+
+    // Alterna visibilidade do conteúdo
+    document.getElementById('step-1-content').style.display = 'none';
+    document.getElementById('step-2-content').style.display = 'block';
+
+    // Alterna pílulas e botões
+    document.getElementById('pill-step-1').classList.remove('active');
+    document.getElementById('pill-step-2').classList.add('active');
+
+    document.getElementById('btn-proximo-step').style.display = 'none';
+    document.getElementById('btn-voltar-step').style.display = 'inline-block';
+    document.getElementById('btn-salvar-bem').style.display = 'inline-flex';
+  }
+
+  function voltarEtapaForm() {
+    document.getElementById('step-1-content').style.display = 'block';
+    document.getElementById('step-2-content').style.display = 'none';
+
+    document.getElementById('pill-step-1').classList.add('active');
+    document.getElementById('pill-step-2').classList.remove('active');
+
+    document.getElementById('btn-proximo-step').style.display = 'inline-flex';
+    document.getElementById('btn-voltar-step').style.display = 'none';
+    document.getElementById('btn-salvar-bem').style.display = 'none';
+  }
+
+  // Aliases para compatibilidade caso o HTML chame os nomes legados
+  function proximoStep() { avancarEtapaForm(); }
+  function voltarStep() { voltarEtapaForm(); }
+
+  // --- LOGICA CONDICIONAL DOS CAMPOS ---
+  function tratarTombamentoChange() {
+    var radioSelecionado = document.querySelector('input[name="possuiTombamento"]:checked');
+    var inputQtd = document.getElementById('input-quantidade');
+
+    if (!radioSelecionado) {
+      ocultarTodosContainersCondicionais();
+      if (inputQtd) inputQtd.readOnly = false;
+      return;
+    }
+
+    var valor = radioSelecionado.value;
+    var boxSim = document.getElementById('box-tombamento-sim');
+    var containerSemPlaqueta = document.getElementById('containerTipoSemPlaqueta');
+
+    if (valor === "SIM") {
+      if (boxSim) boxSim.style.display = 'block';
+      if (containerSemPlaqueta) containerSemPlaqueta.style.display = 'none';
+
+      document.getElementById('box-tombamento-nao').style.display = 'none';
+      document.getElementById('containerOutroDetalhamento').style.display = 'none';
+
+      if (document.getElementById('selectTipoSemPlaqueta')) document.getElementById('selectTipoSemPlaqueta').value = '';
+      if (document.getElementById('detalhamentoOutro')) document.getElementById('detalhamentoOutro').value = '';
+      resetarOpcaoProcesso();
+
+      // Trava quantidade em 1 quando houver tombamento
+      if (inputQtd) {
+        inputQtd.value = 1;
+        inputQtd.readOnly = true;
+      }
+
+    } else if (valor === "NÃO") {
+      if (boxSim) boxSim.style.display = 'none';
+      if (containerSemPlaqueta) containerSemPlaqueta.style.display = 'block';
+
+      if (document.getElementById('input-num-tombamento')) document.getElementById('input-num-tombamento').value = '';
+
+      if (inputQtd) {
+        inputQtd.readOnly = false;
+      }
+
+      gerenciarFluxoSemPlaqueta();
+    }
+  }
+
+  function gerenciarFluxoSemPlaqueta() {
+    var select = document.getElementById('selectTipoSemPlaqueta');
+    var boxNao = document.getElementById('box-tombamento-nao');
+    var containerOutro = document.getElementById('containerOutroDetalhamento');
+
+    if (!select) return;
+    var valorSelect = select.value;
+
+    if (valorSelect === "Bem da UFPE sem plaqueta (plaqueta caiu ou nunca foi etiquetado)") {
+      if (boxNao) boxNao.style.display = 'block';
+      if (containerOutro) containerOutro.style.display = 'none';
+      if (document.getElementById('detalhamentoOutro')) document.getElementById('detalhamentoOutro').value = '';
+    } else if (valorSelect === "Outro") {
+      if (boxNao) boxNao.style.display = 'none';
+      if (containerOutro) containerOutro.style.display = 'block';
+      resetarOpcaoProcesso();
+    } else {
+      if (boxNao) boxNao.style.display = 'none';
+      if (containerOutro) containerOutro.style.display = 'none';
+      resetarOpcaoProcesso();
+    }
+  }
+
+  function tratarProcessoChange() {
+    var radioProc = document.querySelector('input[name="possuiProcesso"]:checked');
+    var boxProcSim = document.getElementById('box-processo-sim');
+
+    if (radioProc && radioProc.value === "SIM") {
+      if (boxProcSim) boxProcSim.style.display = 'block';
+    } else {
+      if (boxProcSim) boxProcSim.style.display = 'none';
+      if (document.getElementById('input-num-processo')) document.getElementById('input-num-processo').value = '';
+    }
+  }
+
+  function resetarOpcaoProcesso() {
+    var radiosProc = document.getElementsByName('possuiProcesso');
+    for (var i = 0; i < radiosProc.length; i++) {
+      radiosProc[i].checked = false;
+    }
+    var boxProcSim = document.getElementById('box-processo-sim');
+    if (boxProcSim) boxProcSim.style.display = 'none';
+    if (document.getElementById('input-num-processo')) document.getElementById('input-num-processo').value = '';
+  }
+
+  function ocultarTodosContainersCondicionais() {
+    var ids = ['box-tombamento-sim', 'containerTipoSemPlaqueta', 'box-tombamento-nao', 'containerOutroDetalhamento'];
+    ids.forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+    resetarOpcaoProcesso();
+  }
+
+  // --- CONTROLE DE LOADING ---
+  function exibirLoading(mensagem) {
+    var overlay = document.getElementById('loading-overlay');
+    var texto = document.getElementById('loading-texto');
+    if (texto && mensagem) texto.innerText = mensagem;
+    if (overlay) overlay.style.display = 'flex';
+  }
+
+  function ocultarLoading() {
+    var overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  // --- INICIALIZAÇÃO ---
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof carregarAutocompleteServidores === 'function') {
+      carregarAutocompleteServidores();
+    }
+  });
+
+function carregarAutocompleteServidores() {
+  google.script.run
+    .withSuccessHandler(function(servidores) {
+      var datalist = document.getElementById('lista-servidores');
+      if (!datalist) return;
+
+      datalist.innerHTML = ''; // Limpa opções anteriores
+      
+      servidores.forEach(function(nome) {
+        var option = document.createElement('option');
+        option.value = nome;
+        datalist.appendChild(option);
+      });
+    })
+    .withFailureHandler(function(err) {
+      console.error('Erro ao carregar lista de servidores:', err);
+    })
+    .obterListaServidores();
+}
+
+</script>

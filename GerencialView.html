@@ -1,0 +1,507 @@
+<div id="screen-gerencial" class="screen-panel" style="display: none;">
+  <!-- Cabeçalho da Visão Gerencial -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+      <h2 style="margin: 0; color: #800000; font-size: 20px;">Painel Gerencial de Inventários</h2>
+      <p style="margin: 5px 0 0 0; color: #666; font-size: 13px;">Acompanhamento global das Unidades Gestoras (UGs) e Bolsistas</p>
+    </div>
+    <div>
+      <button onclick="abrirModalCadastroComissao()" class="btn-principal" style="background-color: #28a745; font-size: 13px; margin-right: 8px;">
+        👥 Cadastrar Comissão
+      </button>
+      <button onclick="carregarPainelGerencial()" class="btn-principal" style="background-color: #0056b3; font-size: 13px;">
+        🔄 Atualizar Dados
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Indicadores (KPIs) -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px;">
+    <div style="background: #f8f9fa; border-left: 4px solid #800000; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase;">Total de UGs</span>
+      <h3 id="kpi-total-ugs" style="margin: 5px 0 0 0; font-size: 24px; color: #333;">0</h3>
+    </div>
+    <div style="background: #f8f9fa; border-left: 4px solid #17a2b8; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase;">Total de UAs</span>
+      <h3 id="kpi-total-uas" style="margin: 5px 0 0 0; font-size: 24px; color: #333;">0</h3>
+    </div>
+    <div style="background: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase;">Bens Inventariados</span>
+      <h3 id="kpi-total-bens" style="margin: 5px 0 0 0; font-size: 24px; color: #333;">0</h3>
+    </div>
+    <div style="background: #f8f9fa; border-left: 4px solid #0056b3; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size: 12px; color: #666; font-weight: 600; text-transform: uppercase;">Tombos Convertidos</span>
+      <h3 id="kpi-total-tombos-bolsistas" style="margin: 5px 0 0 0; font-size: 20px; color: #333;">0 / 0</h3>
+    </div>
+  </div>
+
+  <!-- Acompanhamento por UG -->
+  <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 30px;">
+    <h3>📍 Progresso por Unidade Gestora (UG)</h3>
+    <table class="data-table" style="width: 100%; margin-top: 15px; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd; text-align: left;">
+          <th style="padding: 12px 8px; white-space: nowrap; width: 80px;">Sigla UG</th>
+          <th style="padding: 12px 8px; white-space: nowrap;">Ofício Comissão</th>
+          <th style="padding: 12px 8px; white-space: nowrap; text-align: center;">Total UAs</th>
+          <th style="padding: 12px 8px; white-space: nowrap; text-align: center;">Pendentes</th>
+          <th style="padding: 12px 8px; white-space: nowrap; text-align: center;">Em Andamento</th>
+          <th style="padding: 12px 8px; white-space: nowrap; text-align: center;">Concluídas</th>
+          <th style="padding: 12px 8px; white-space: nowrap; text-align: center;">Sem Carga</th>
+          <th style="padding: 12px 8px; white-space: nowrap; text-align: center;">Bens Cadastrados</th>
+          <th style="padding: 12px 8px; white-space: nowrap; text-align: center;">Progresso</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-gerencial-ugs">
+        <tr><td colspan="9" style="text-align:center; padding: 20px;">Carregando dados...</td></tr>
+      </tbody>
+      <tfoot id="tfoot-gerencial-ugs"></tfoot>
+    </table>
+  </div>
+
+  <!-- Nova Seção: Acompanhamento da Conversão de Tombos pelos Bolsistas -->
+  <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 style="margin: 0;">🎓 Conversão de Tombos pelos Bolsistas</h3>
+      <span id="kpi-resumo-bolsistas" style="font-size: 13px; font-weight: bold; color: #0056b3;"></span>
+    </div>
+    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd; text-align: left;">
+          <th style="padding: 12px 8px;">Bolsista</th>
+          <th style="padding: 12px 8px;">E-mail</th>
+          <th style="padding: 12px 8px; text-align: center;">Total Atribuído</th>
+          <th style="padding: 12px 8px; text-align: center;">Convertidos</th>
+          <th style="padding: 12px 8px; text-align: center;">Pendentes</th>
+          <th style="padding: 12px 8px; text-align: center;">Progresso</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-gerencial-bolsistas">
+        <tr><td colspan="6" style="text-align:center; padding: 20px;">Carregando dados dos bolsistas...</td></tr>
+      </tbody>
+      <tfoot id="tfoot-gerencial-bolsistas"></tfoot>
+    </table>
+  </div>
+
+  <!-- Modal Cadastrar Comissão Setorial -->
+  <div id="modal-comissao-gerencial" class="modal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: white; padding: 25px; border-radius: 8px; width: 650px; max-width: 95%; max-height: 90vh; overflow-y: auto;">
+      <h3 style="margin-top: 0; color: #800000;">Cadastrar Comissão Setorial</h3>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+        <div>
+          <label style="font-weight: bold; font-size: 12px;">SELECIONE A UG *</label>
+          <select id="comissao-select-ug" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="">Carregando UGs...</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-weight: bold; font-size: 12px;">OFÍCIO DE INDICAÇÃO *</label>
+          <input type="text" id="comissao-oficio" placeholder="Ex: Ofício nº 123/2026-UG" style="width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+      <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #333;">Adicionar Membro</h4>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div>
+          <label style="font-size: 12px; font-weight: bold;">Nome do Servidor (Autocomplete) *</label>
+          <input type="text" id="comissao-membro-nome" list="lista-servidores-comissao" oninput="tratarSelecaoServidor()" placeholder="Digite para buscar..." style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+          <datalist id="lista-servidores-comissao"></datalist>
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: bold;">SIAPE *</label>
+          <input type="text" id="comissao-membro-siape" placeholder="Siape do servidor" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: bold;">E-mail *</label>
+          <input type="email" id="comissao-membro-email" placeholder="usuario@ufpe.br" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+
+        <div>
+          <label style="font-size: 12px; font-weight: bold;">Perfil na Comissão *</label>
+          <select id="comissao-membro-perfil" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="PRESIDENTE">PRESIDENTE</option>
+            <option value="SUBSTITUTO">SUBSTITUTO</option>
+            <option value="MEMBRO DA COMISSAO" selected>MEMBRO DA COMISSAO</option>
+          </select>
+        </div>
+      </div>
+
+      <button onclick="adicionarMembroComissaoFila()" type="button" style="background: #17a2b8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-bottom: 15px;">
+        ➕ Incluir Membro na Lista
+      </button>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+        <thead>
+          <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd; text-align: left;">
+            <th style="padding: 8px;">Nome / SIAPE</th>
+            <th style="padding: 8px;">E-mail</th>
+            <th style="padding: 8px;">Perfil</th>
+            <th style="padding: 8px; text-align: center;">Ação</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-membros-fila">
+          <tr><td colspan="4" style="text-align: center; color: #888; padding: 12px;">Nenhum membro adicionado.</td></tr>
+        </tbody>
+      </table>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button onclick="fecharModalCadastroComissao()" style="padding: 8px 15px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancelar</button>
+        <button onclick="salvarComissaoFinal()" style="padding: 8px 15px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">💾 Salvar no Banco (USUARIOS)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function carregarPainelGerencial() {
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(renderizarDashboardGerencial)
+        .withFailureHandler(function(err) {
+          alert("Erro ao carregar dados gerenciais: " + err.message);
+        })
+        .getDadosDashboardGerencial();
+    }
+  }
+
+  function validarEExibirPainelGerencial(perfilUsuario) {
+    var painel = document.getElementById('screen-gerencial');
+    if (!painel) return;
+
+    const perfilNorm = (perfilUsuario || '').toString().toUpperCase().trim();
+
+    if (perfilNorm === 'GERENCIAL' || perfilNorm === 'ADMIN') {
+      painel.style.display = 'block';
+      carregarPainelGerencial();
+    } else {
+      painel.style.display = 'none';
+    }
+  }
+
+  function atualizarTextoElemento(idsPossiveis, valor) {
+    for (let id of idsPossiveis) {
+      let el = document.getElementById(id);
+      if (el) {
+        el.textContent = valor;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  function renderizarDashboardGerencial(dados) {
+    if (!dados) return;
+
+    // 1. Atualiza KPIs Gerais
+    const totalUgs = dados.resumoGeral?.totalUgs ?? 0;
+    const totalUas = dados.resumoGeral?.totalUas ?? 0;
+    const totalBens = dados.resumoGeral?.totalBens ?? 0;
+    const totalTombosBolsistas = dados.resumoGeral?.totalTombosBolsistas ?? 0;
+    const totalTombosConvertidos = dados.resumoGeral?.totalTombosConvertidos ?? 0;
+    const pctTombos = totalTombosBolsistas > 0 ? Math.round((totalTombosConvertidos / totalTombosBolsistas) * 100) : 0;
+
+    atualizarTextoElemento(['kpi-total-ugs', 'metric-total-ugs'], totalUgs);
+    atualizarTextoElemento(['kpi-total-uas', 'metric-total-uas'], totalUas);
+    atualizarTextoElemento(['kpi-total-bens', 'metric-total-bens'], totalBens);
+    atualizarTextoElemento(['kpi-total-tombos-bolsistas'], `${totalTombosConvertidos} / ${totalTombosBolsistas} (${pctTombos}%)`);
+
+    // 2. Renderiza Tabela de UGs
+    const tbodyUgs = document.getElementById('tbody-gerencial-ugs');
+    const tfootUgs = document.getElementById('tfoot-gerencial-ugs');
+    
+    if (tbodyUgs) {
+      tbodyUgs.innerHTML = '';
+      if (tfootUgs) tfootUgs.innerHTML = '';
+
+      let sumTotalUas = 0;
+      let sumPendentes = 0;
+      let sumEmAndamento = 0;
+      let sumConcluidas = 0;
+      let sumSemCarga = 0;
+      let sumTotalBens = 0;
+      let totalUgsComOficio = 0;
+
+      if (dados.ugs && Array.isArray(dados.ugs)) {
+        dados.ugs.forEach(ug => {
+          const sigla = ug.siglaUg || ug.sigla || ug.codigoUg || '-';
+          const oficio = ug.oficio || '-';
+          
+          if (oficio && oficio !== '-') totalUgsComOficio++;
+
+          const totalUas = Number(ug.totalUas) || 0;
+          const uasPendentes = Number(ug.uasPendentes) || 0;
+          const uasEmAndamento = Number(ug.uasEmAndamento) || 0;
+          const uasConcluidas = Number(ug.uasConcluidas) || 0;
+          const uasSemCarga = Number(ug.uasSemCarga || ug.semCarga) || 0;
+          const totalBens = Number(ug.totalBens) || 0;
+
+          const pct = totalUas > 0 ? Math.round(((uasConcluidas + uasSemCarga) / totalUas) * 100) : 0;
+
+          sumTotalUas += totalUas;
+          sumPendentes += uasPendentes;
+          sumEmAndamento += uasEmAndamento;
+          sumConcluidas += uasConcluidas;
+          sumSemCarga += uasSemCarga;
+          sumTotalBens += totalBens;
+
+          const row = `
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 12px; font-weight: bold;">${sigla}</td>
+              <td style="padding: 12px; color: #555;">${oficio}</td>
+              <td style="text-align: center;">${totalUas}</td>
+              <td style="text-align: center; color: red;">${uasPendentes}</td>
+              <td style="text-align: center; color: orange; font-weight: bold;">${uasEmAndamento}</td>
+              <td style="text-align: center; color: green; font-weight: bold;">${uasConcluidas}</td>
+              <td style="text-align: center; font-weight: bold;">${uasSemCarga}</td>
+              <td style="text-align: center; font-weight: bold;">${totalBens}</td>
+              <td style="text-align: center;">
+                <div style="background: #e0e0e0; border-radius: 4px; overflow: hidden; width: 70px; height: 12px; display: inline-block; vertical-align: middle;">
+                  <div style="background: #800000; width: ${pct}%; height: 100%;"></div>
+                </div>
+                <span style="font-size: 12px; margin-left: 5px; font-weight: bold;">${pct}%</span>
+              </td>
+            </tr>
+          `;
+          tbodyUgs.innerHTML += row;
+        });
+      }
+
+      const pctGeral = sumTotalUas > 0 ? Math.round(((sumConcluidas + sumSemCarga) / sumTotalUas) * 100) : 0;
+      const qtdUgs = dados.ugs ? dados.ugs.length : 0;
+      const pctOficios = qtdUgs > 0 ? Math.round((totalUgsComOficio / qtdUgs) * 100) : 0;
+
+      if (tfootUgs) {
+        tfootUgs.innerHTML = `
+          <tr style="font-weight: bold; background-color: #f8f9fa; border-top: 2px solid #ccc;">
+            <td style="padding: 12px;">TOTAL GERAL UGs</td>
+            <td style="padding: 12px; color: #0056b3;">${pctOficios}% (${totalUgsComOficio}/${qtdUgs})</td>
+            <td style="text-align: center;">${sumTotalUas}</td>
+            <td style="text-align: center; color: red;">${sumPendentes}</td>
+            <td style="text-align: center; color: orange;">${sumEmAndamento}</td>
+            <td style="text-align: center; color: green;">${sumConcluidas}</td>
+            <td style="text-align: center;">${sumSemCarga}</td>
+            <td style="text-align: center;">${sumTotalBens}</td>
+            <td style="text-align: center;">
+              <div style="background: #e0e0e0; border-radius: 4px; overflow: hidden; width: 70px; height: 12px; display: inline-block; vertical-align: middle;">
+                <div style="background: #800000; width: ${pctGeral}%; height: 100%;"></div>
+              </div>
+              <span style="font-size: 12px; margin-left: 5px; color: #800000;">${pctGeral}%</span>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // 3. Renderiza Tabela de Acompanhamento dos Bolsistas
+    const tbodyBolsistas = document.getElementById('tbody-gerencial-bolsistas');
+    const tfootBolsistas = document.getElementById('tfoot-gerencial-bolsistas');
+    const elResumoBolsistas = document.getElementById('kpi-resumo-bolsistas');
+
+    if (tbodyBolsistas) {
+      tbodyBolsistas.innerHTML = '';
+      if (tfootBolsistas) tfootBolsistas.innerHTML = '';
+
+      let sumBolsistasTotal = 0;
+      let sumBolsistasConvertidos = 0;
+      let sumBolsistasPendentes = 0;
+
+      if (dados.bolsistas && Array.isArray(dados.bolsistas) && dados.bolsistas.length > 0) {
+        dados.bolsistas.forEach(b => {
+          const total = Number(b.total) || 0;
+          const convertidos = Number(b.convertidos) || 0;
+          const pendentes = Number(b.pendentes) || 0;
+          const pct = total > 0 ? Math.round((convertidos / total) * 100) : 0;
+
+          sumBolsistasTotal += total;
+          sumBolsistasConvertidos += convertidos;
+          sumBolsistasPendentes += pendentes;
+
+          const row = `
+            <tr style="border-bottom: 1px solid #eee;">
+              <td style="padding: 12px; font-weight: bold;">${b.nome || 'Bolsista'}</td>
+              <td style="padding: 12px; color: #555;">${b.email || '-'}</td>
+              <td style="text-align: center; font-weight: bold;">${total}</td>
+              <td style="text-align: center; color: green; font-weight: bold;">${convertidos}</td>
+              <td style="text-align: center; color: #d39e00; font-weight: bold;">${pendentes}</td>
+              <td style="text-align: center;">
+                <div style="background: #e0e0e0; border-radius: 4px; overflow: hidden; width: 70px; height: 12px; display: inline-block; vertical-align: middle;">
+                  <div style="background: #28a745; width: ${pct}%; height: 100%;"></div>
+                </div>
+                <span style="font-size: 12px; margin-left: 5px; font-weight: bold;">${pct}%</span>
+              </td>
+            </tr>
+          `;
+          tbodyBolsistas.innerHTML += row;
+        });
+
+        const pctGeralBolsistas = sumBolsistasTotal > 0 ? Math.round((sumBolsistasConvertidos / sumBolsistasTotal) * 100) : 0;
+
+        if (elResumoBolsistas) {
+          elResumoBolsistas.textContent = `Total Convertido: ${sumBolsistasConvertidos} de ${sumBolsistasTotal} (${pctGeralBolsistas}%)`;
+        }
+
+        if (tfootBolsistas) {
+          tfootBolsistas.innerHTML = `
+            <tr style="font-weight: bold; background-color: #f8f9fa; border-top: 2px solid #ccc;">
+              <td style="padding: 12px;" colspan="2">TOTAL GERAL BOLSISTAS</td>
+              <td style="text-align: center;">${sumBolsistasTotal}</td>
+              <td style="text-align: center; color: green;">${sumBolsistasConvertidos}</td>
+              <td style="text-align: center; color: #d39e00;">${sumBolsistasPendentes}</td>
+              <td style="text-align: center;">
+                <div style="background: #e0e0e0; border-radius: 4px; overflow: hidden; width: 70px; height: 12px; display: inline-block; vertical-align: middle;">
+                  <div style="background: #28a745; width: ${pctGeralBolsistas}%; height: 100%;"></div>
+                </div>
+                <span style="font-size: 12px; margin-left: 5px; color: #28a745;">${pctGeralBolsistas}%</span>
+              </td>
+            </tr>
+          `;
+        }
+      } else {
+        tbodyBolsistas.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: #777;">Nenhum bolsista cadastrado ou com tombos atribuídos.</td></tr>';
+        if (elResumoBolsistas) elResumoBolsistas.textContent = '';
+      }
+    }
+  }
+
+  let cacheServidoresComissao = [];
+  let cacheUgsComissao = [];
+  let filaMembrosComissao = [];
+
+  function abrirModalCadastroComissao() {
+    const modal = document.getElementById('modal-comissao-gerencial');
+    const selectUg = document.getElementById('comissao-select-ug');
+    
+    if (modal) modal.style.display = 'flex';
+
+    if (cacheUgsComissao.length > 0 && cacheServidoresComissao.length > 0) {
+      renderizarSelectUgsEServidores();
+      return;
+    }
+
+    if (selectUg) selectUg.innerHTML = '<option value="">Carregando UGs...</option>';
+
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run
+        .withSuccessHandler(function(dados) {
+          cacheUgsComissao = dados.ugs || [];
+          cacheServidoresComissao = dados.servidores || [];
+          renderizarSelectUgsEServidores();
+        })
+        .withFailureHandler(function(err) {
+          alert("Erro ao carregar UGs e Servidores: " + err.message);
+          if (selectUg) selectUg.innerHTML = '<option value="">Erro ao carregar UGs</option>';
+        })
+        .getDadosAuxiliaresComissao();
+    }
+  }
+
+  function renderizarSelectUgsEServidores() {
+    const selectUg = document.getElementById('comissao-select-ug');
+    const datalist = document.getElementById('lista-servidores-comissao');
+
+    if (selectUg) {
+      const optionsUg = cacheUgsComissao
+        .map(u => `<option value="${u.codigo}" data-sigla="${u.sigla}">${u.codigo} - ${u.sigla}</option>`)
+        .join('');
+      selectUg.innerHTML = '<option value="">-- Selecione a UG --</option>' + optionsUg;
+    }
+
+    if (datalist) {
+      datalist.innerHTML = cacheServidoresComissao
+        .map(s => `<option value="${s.nome}" data-siape="${s.siape}">`)
+        .join('');
+    }
+  }
+
+  function fecharModalCadastroComissao() {
+    document.getElementById('modal-comissao-gerencial').style.display = 'none';
+    filaMembrosComissao = [];
+    document.getElementById('comissao-oficio').value = '';
+    renderizarFilaMembros();
+  }
+
+  function tratarSelecaoServidor() {
+    const nomeDigitado = document.getElementById('comissao-membro-nome').value.trim();
+    const servidorEncontrado = cacheServidoresComissao.find(s => s.nome.toLowerCase() === nomeDigitado.toLowerCase());
+    
+    if (servidorEncontrado) {
+      document.getElementById('comissao-membro-siape').value = servidorEncontrado.siape;
+    }
+  }
+
+  function adicionarMembroComissaoFila() {
+    const selectUg = document.getElementById('comissao-select-ug');
+    const codigoUg = selectUg.value;
+    const siglaUg = selectUg.options[selectUg.selectedIndex]?.getAttribute('data-sigla') || codigoUg;
+    const oficio = document.getElementById('comissao-oficio').value.trim();
+
+    const nome = document.getElementById('comissao-membro-nome').value.trim();
+    const siape = document.getElementById('comissao-membro-siape').value.trim();
+    const email = document.getElementById('comissao-membro-email').value.trim().toLowerCase();
+    const perfil = document.getElementById('comissao-membro-perfil').value;
+
+    if (!codigoUg) return alert("Selecione a UG da comissão.");
+    if (!oficio) return alert("Informe o Ofício de Indicação.");
+    if (!nome || !email || !siape) return alert("Preencha Nome, SIAPE e E-mail do membro.");
+
+    filaMembrosComissao.push({ codigoUg, siglaUg, oficio, nome, siape, email, perfil });
+
+    document.getElementById('comissao-membro-nome').value = '';
+    document.getElementById('comissao-membro-siape').value = '';
+    document.getElementById('comissao-membro-email').value = '';
+
+    renderizarFilaMembros();
+  }
+
+  function removerMembroFila(index) {
+    filaMembrosComissao.splice(index, 1);
+    renderizarFilaMembros();
+  }
+
+  function renderizarFilaMembros() {
+    const tbody = document.getElementById('tbody-membros-fila');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (filaMembrosComissao.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #888; padding: 12px;">Nenhum membro adicionado.</td></tr>';
+      return;
+    }
+
+    filaMembrosComissao.forEach((m, idx) => {
+      tbody.innerHTML += `
+        <tr style="border-bottom: 1px solid #eee;">
+          <td style="padding: 8px;"><strong>${m.nome}</strong><br><small style="color:#666;">SIAPE: ${m.siape}</small></td>
+          <td style="padding: 8px;">${m.email}</td>
+          <td style="padding: 8px;"><span style="background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: bold;">${m.perfil}</span></td>
+          <td style="padding: 8px; text-align: center;">
+            <button onclick="removerMembroFila(${idx})" style="border:none; background:none; cursor:pointer; font-size:14px;">🗑️</button>
+          </td>
+        </tr>
+      `;
+    });
+  }
+
+  function salvarComissaoFinal() {
+    if (filaMembrosComissao.length === 0) {
+      alert("Adicione pelo menos um membro antes de salvar.");
+      return;
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        alert("Comissão gravada na aba USUARIOS com sucesso!");
+        fecharModalCadastroComissao();
+      })
+      .withFailureHandler(function(err) {
+        alert("Erro ao gravar comissão: " + err.message);
+      })
+      .salvarMembrosComissao(filaMembrosComissao);
+  }
+</script>

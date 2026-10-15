@@ -1,0 +1,296 @@
+<script>
+/**
+ * Localiza a UG ativa verificando código, sigla e cabeçalho da página
+ */
+function obterUgAtiva() {
+  // 1. Tenta pelo estado interno da comissão
+  if (typeof comissaoState !== 'undefined' && comissaoState.codigoUg) {
+    return comissaoState.codigoUg;
+  }
+
+  // 2. Tenta pelas variáveis do contexto do usuário
+  const ctx = (typeof userContext !== 'undefined' ? userContext : null) || 
+              (typeof usuarioAtual !== 'undefined' ? usuarioAtual : null) ||
+              (typeof USER_CONTEXT !== 'undefined' ? USER_CONTEXT : null);
+
+  if (ctx) {
+    if (ctx.codigoUg) return ctx.codigoUg;
+    if (ctx.siglaUg) return ctx.siglaUg;
+    if (ctx.codigo_ug) return ctx.codigo_ug;
+    if (ctx.sigla_ug) return ctx.sigla_ug;
+    if (ctx.ug) return ctx.ug;
+  }
+
+  // 3. Captura do texto do cabeçalho da página (Ex: "UG: PROAD" ou "UG: 153409")
+  const textoPagina = document.body ? document.body.innerText : '';
+  const match = textoPagina.match(/UG:\s*([A-Za-z0-9_-]+)/i);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+
+  return '';
+}
+
+function abrirRelatorioFinal() {
+  ocultarTodasAsTelas();
+  const telaRelatorio = document.getElementById('screen-relatorio-setorial'); 
+  if (telaRelatorio) {
+    telaRelatorio.style.display = 'block';
+    carregarDadosRelatorio();
+  } else {
+    alert("Erro: Tela de relatório não encontrada.");
+  }
+}
+
+function carregarDadosRelatorio() {
+  const tbody = document.getElementById('tbody-resumo-uas-gestor') || document.getElementById('tabela-relatorio-uas');
+  const labelUg = document.getElementById('rel-resumo-nome-ug');
+
+  if (!tbody) return;
+
+  const termoUg = obterUgAtiva();
+
+  if (labelUg) {
+    labelUg.innerText = termoUg ? "UG: " + termoUg : "UG Não Identificada";
+  }
+
+  if (!termoUg) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #dc3545; font-weight: bold;">Código da UG não identificado no contexto do usuário.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #888;">⏳ Gerando relatório setorial para: <strong>' + termoUg + '</strong>...</td></tr>';
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(renderizarRelatorioUg)
+      .withFailureHandler(function(err) {
+        tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #dc3545;">Erro ao gerar relatório: ' + err.message + '</td></tr>';
+      })
+      .obterDadosRelatorioUg(termoUg);
+  }
+}
+
+function renderizarRelatorioUg(res) {
+  const tbody = document.getElementById('tbody-resumo-uas-gestor') || document.getElementById('tabela-relatorio-uas');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (!res || !res.listaUas || res.listaUas.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding: 20px; text-align: center; color: #888;">Nenhuma UA encontrada para esta UG.</td></tr>';
+    return;
+  }
+
+  res.listaUas.forEach(function(ua) {
+    const tr = document.createElement('tr');
+    tr.style.borderBottom = '1px solid #eee';
+
+    const statusStr = ua.status || 'Pendente';
+    let badgeCor = 'background: #f8d7da; color: #721c24;';
+    if (statusStr === 'Concluída') badgeCor = 'background: #d4edda; color: #155724;';
+    else if (statusStr === 'Em andamento') badgeCor = 'background: #fff3cd; color: #856404;';
+    else if (statusStr === 'Não possui carga patrimonial') badgeCor = 'background: #e2e3e5; color: #383d41;';
+
+    tr.innerHTML = `
+      <td style="padding: 10px; font-weight: 600;">${ua.codigoSipac || '-'}</td>
+      <td style="padding: 10px;">${ua.nomeUa || '-'}</td>
+      <td style="padding: 10px; text-align: center; font-weight: 600;">${ua.totalBens || 0}</td>
+      <td style="padding: 10px; text-align: center;">
+        <span style="padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; ${badgeCor}">
+          ${statusStr}
+        </span>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+/**
+ * Busca os dados do backend e dispara a emissão/impressão do Relatório Setorial
+ */
+/**
+ * Dispara a busca dos dados no backend e invoca a montagem do relatório oficial
+ */
+function dispararImpressaoRelatorio() {
+  const termoUg = typeof obterUgAtiva === 'function' ? obterUgAtiva() : 'PROAD';
+
+  if (!termoUg) {
+    alert("Identificador da UG não encontrado.");
+    return;
+  }
+
+  if (typeof google !== 'undefined' && google.script && google.script.run) {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res || !res.listaUas) {
+          alert("Nenhum dado encontrado para gerar o relatório.");
+          return;
+        }
+        emitirRelatorioSetorialOficial(res.listaUas, res.mapaBensPorUa, res.membros || [], termoUg);
+      })
+      .withFailureHandler(function(err) {
+        alert("Erro ao buscar dados do relatório: " + err.message);
+      })
+      .obterDadosRelatorioUg(termoUg);
+  }
+}
+
+/**
+ * Monta o documento com o layout do PDF oficial e abre a janela de impressão
+ */
+function emitirRelatorioSetorialOficial(listaUas, mapaBensPorUa, membros, siglaUg) {
+  // 1. Monta Tabela de Membros da Comissão
+  let linhasMembros = '';
+  if (membros.length === 0) {
+    linhasMembros = '<tr><td colspan="3" style="text-align:center;">Nenhum membro registrado.</td></tr>';
+  } else {
+    membros.forEach(m => {
+      linhasMembros += `
+        <tr>
+          <td>${m.nome}</td>
+          <td>${m.funcao}</td>
+          <td>${m.siape}</td>
+        </tr>
+      `;
+    });
+  }
+
+  // 2. Monta Tabela de Resumo das UAs
+  let linhasResumoUas = '';
+  listaUas.forEach(ua => {
+    const bensUa = mapaBensPorUa[ua.codigoSipac] || [];
+    const qtdBens = ua.totalBens !== undefined ? ua.totalBens : bensUa.length;
+    
+    linhasResumoUas += `
+      <tr>
+        <td><strong>${ua.codigoSipac}</strong></td>
+        <td>${ua.nomeUa || ua.descricao || '-'}</td>
+        <td style="text-align: center;">${qtdBens}</td>
+        <td style="text-align: center;">${ua.status || 'Pendente'}</td>
+      </tr>
+    `;
+  });
+
+  // 3. Monta Detalhamento dos Bens Agrupados por UA
+  let blocosBensAgrupados = '';
+  listaUas.forEach(ua => {
+    const bens = mapaBensPorUa[ua.codigoSipac] || [];
+    const nomeUa = ua.nomeUa || ua.descricao || 'N/I';
+    
+    let linhasBens = '';
+    if (bens.length === 0) {
+      linhasBens = `<tr><td colspan="4" style="text-align:center; color:#555;">Nenhum bem registrado nesta unidade.</td></tr>`;
+    } else {
+      bens.forEach(bem => {
+        linhasBens += `
+          <tr>
+            <td><strong>${bem.tombamento || '-'}</strong></td>
+            <td>${bem.descricao || '-'}</td>
+            <td>${bem.localizacao || '-'}</td>
+            <td style="text-align:center;">${bem.status || 'Inventariado'}</td>
+          </tr>
+        `;
+      });
+    }
+
+    blocosBensAgrupados += `
+      <div class="bloco-ua">
+        <div class="titulo-ua">${ua.codigoSipac} - ${nomeUa}</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 15%;">Tombamento</th>
+              <th style="width: 45%;">Descrição do Bem</th>
+              <th style="width: 25%;">Localização</th>
+              <th style="width: 15%; text-align: center;">Situação</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasBens}
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+
+  // 4. Abre Janela para Impressão com Estilos do Documento Oficial
+  const janela = window.open('', '_blank', 'width=900,height=800');
+  janela.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Inventário de Bens Móveis 2026 - ${siglaUg}</title>
+        <style>
+          @page { size: A4; margin: 15mm; }
+          body { font-family: Arial, sans-serif; font-size: 11px; color: #000; line-height: 1.3; }
+          
+          .cabecalho { text-align: center; margin-bottom: 20px; text-transform: uppercase; }
+          .cabecalho h1 { font-size: 14px; margin: 0; font-weight: bold; }
+          .cabecalho h2 { font-size: 12px; margin: 3px 0; font-weight: bold; }
+          .cabecalho h3 { font-size: 11px; margin: 0; font-weight: normal; }
+
+          .secao-titulo { font-weight: bold; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px; }
+
+          table { width: 100%; border-collapse: collapse; margin-bottom: 15px; page-break-inside: auto; }
+          tr { page-break-inside: avoid; page-break-after: auto; }
+          th, td { border: 1px solid #000; padding: 5px 6px; text-align: left; vertical-align: top; }
+          th { background-color: #f0f0f0; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+
+          .bloco-ua { margin-top: 15px; page-break-inside: avoid; }
+          .titulo-ua { font-weight: bold; margin-bottom: 4px; font-size: 11px; }
+        </style>
+      </head>
+      <body>
+        <div class="cabecalho">
+          <h1>UNIVERSIDADE FEDERAL DE PERNAMBUCO</h1>
+          <h2>UG: ${siglaUg}</h2>
+          <h3>Levantamento do Inventário de Bens Móveis 2026</h3>
+        </div>
+
+        <div class="secao-titulo">COMISSÃO SETORIAL DE INVENTÁRIO</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40%;">Nome do Membro</th>
+              <th style="width: 35%;">Função / Cargo na Comissão</th>
+              <th style="width: 25%;">SIAPE / Vínculo</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasMembros}
+          </tbody>
+        </table>
+
+        <div class="secao-titulo">RESUMO DAS UNIDADES ADMINISTRATIVAS (UAS)</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 15%;">Código SIPAC</th>
+              <th style="width: 55%;">Unidade Administrativa (UA)</th>
+              <th style="width: 12%; text-align: center;">Qtd. Bens</th>
+              <th style="width: 18%; text-align: center;">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasResumoUas}
+          </tbody>
+        </table>
+
+        <div class="secao-titulo" style="margin-top: 25px;">DETALHAMENTO DOS BENS AGRUPADOS POR UA</div>
+        ${blocosBensAgrupados}
+
+      </body>
+    </html>
+  `);
+
+  janela.document.close();
+  janela.focus();
+
+  setTimeout(() => {
+    janela.print();
+  }, 500);
+}
+
+</script>

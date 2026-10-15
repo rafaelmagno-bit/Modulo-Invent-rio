@@ -1,0 +1,48 @@
+<!-- TELA EXCLUSIVA DO BOLSISTA -->
+<div id="screen-bolsista" class="screen-panel" style="display: none; padding: 20px;">
+  
+  <!-- Cabeçalho -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+      <h2 style="margin: 0; color: #0056b3; font-size: 20px;">Painel de Conversão de Tombamentos</h2>
+      <p style="margin: 5px 0 0 0; color: #666; font-size: 13px;">Trabalhos atribuídos ao seu perfil</p>
+    </div>
+    <button onclick="carregarTombosBolsista()" class="btn-principal" style="background-color: #0056b3; font-size: 13px;">
+      🔄 Atualizar Minha Lista
+    </button>
+  </div>
+
+  <!-- Cards de Resumo -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px;">
+    <div style="background: #f8f9fa; border-left: 4px solid #0056b3; padding: 15px; border-radius: 6px;">
+      <span style="font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase;">Total Atribuído</span>
+      <h3 id="kpi-bolsista-total" style="margin: 5px 0 0 0; font-size: 22px;">0</h3>
+    </div>
+    <div style="background: #f8f9fa; border-left: 4px solid #ffc107; padding: 15px; border-radius: 6px;">
+      <span style="font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase;">Pendentes</span>
+      <h3 id="kpi-bolsista-pendentes" style="margin: 5px 0 0 0; font-size: 22px; color: #d39e00;">0</h3>
+    </div>
+    <div style="background: #f8f9fa; border-left: 4px solid #28a745; padding: 15px; border-radius: 6px;">
+      <span style="font-size: 11px; color: #666; font-weight: bold; text-transform: uppercase;">Convertidos</span>
+      <h3 id="kpi-bolsista-convertidos" style="margin: 5px 0 0 0; font-size: 22px; color: #28a745;">0</h3>
+    </div>
+  </div>
+
+  <!-- Tabela de Conversão -->
+  <div style="background: white; border-radius: 8px; padding: 15px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
+    <table class="data-table" style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="background: #f8f9fa; border-bottom: 2px solid #ddd; text-align: left;">
+          <th style="padding: 10px;">Linha</th>
+          <th style="padding: 10px;">Tombo Original</th>
+          <th style="padding: 10px;">Descrição do Bem</th>
+          <th style="padding: 10px; width: 220px;">Tombo Convertido (Coluna T)</th>
+          <th style="padding: 10px; text-align: center; width: 120px;">Ação</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-tombos-bolsista">
+        <tr><td colspan="5" style="text-align:center; padding: 20px;">Carregando seus tombamentos...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>

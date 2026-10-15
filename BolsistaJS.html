@@ -1,0 +1,178 @@
+<script>
+  let usuarioBolsistaLogado = ""; // Armazena o e-mail ou identificador do bolsista logado
+
+  /**
+   * Valida o acesso e exibe o painel do Bolsista
+   */
+  function validarEExibirPainelBolsista(perfilUsuario, emailUsuario) {
+    const painel = document.getElementById('screen-bolsista');
+    if (!painel) return;
+
+    const perfilNorm = (perfilUsuario || '').toString().toUpperCase().trim();
+
+    if (perfilNorm === 'BOLSISTA') {
+      usuarioBolsistaLogado = emailUsuario;
+      painel.style.display = 'block';
+      carregarTombosBolsista();
+    } else {
+      painel.style.display = 'none';
+    }
+  }
+
+  /**
+   * Carrega os tombos atribuídos ao bolsista logado
+   */
+  function carregarTombosBolsista() {
+    if (!usuarioBolsistaLogado) return;
+
+    const tbody = document.getElementById('tbody-tombos-bolsista');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 15px;">Atualizando lista de tombos...</td></tr>';
+
+    google.script.run
+      .withSuccessHandler(renderizarTabelaBolsista)
+      .withFailureHandler(function(err) {
+        alert("Erro ao carregar lista de tombos: " + err.message);
+      })
+      .getTombosBolsista(usuarioBolsistaLogado);
+  }
+
+  /**
+ * Renderiza a tabela do Bolsista com identificadores de status em cada linha
+ */
+function renderizarTabelaBolsista(listaTombos) {
+  const tbody = document.getElementById('tbody-tombos-bolsista');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  if (!listaTombos || listaTombos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#777; padding:20px;">Nenhum tombamento atribuído no momento.</td></tr>';
+    atualizarKpisBolsista(0, 0, 0);
+    return;
+  }
+
+  let pendentes = 0;
+  let convertidos = 0;
+
+  listaTombos.forEach(item => {
+    const statusItem = item.tomboConvertido ? 'CONVERTIDO' : 'PENDENTE';
+    if (statusItem === 'CONVERTIDO') convertidos++;
+    else pendentes++;
+
+    const row = `
+      <tr id="row-tombo-${item.linha}" data-status="${statusItem}" style="border-bottom: 1px solid #eee;">
+        <td style="padding: 10px; font-weight: bold; color: #666;">#${item.linha}</td>
+        <td style="padding: 10px; font-weight: bold;">${item.tomboOriginal || '-'}</td>
+        <td style="padding: 10px; color: #444;">${item.descricao || '-'}</td>
+        <td style="padding: 10px;">
+          <input type="text" id="tombo-conv-${item.linha}" value="${item.tomboConvertido || ''}" 
+                 placeholder="Digite o tombo correto..." 
+                 style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;">
+        </td>
+        <td style="padding: 10px; text-align: center;">
+          <button id="btn-salvar-${item.linha}" onclick="salvarConversaoTombo(${item.linha})" 
+                  style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; min-width: 95px; transition: background 0.3s;">
+            💾 Salvar
+          </button>
+        </td>
+      </tr>
+    `;
+    tbody.innerHTML += row;
+  });
+
+  atualizarKpisBolsista(listaTombos.length, pendentes, convertidos);
+}
+
+  /**
+   * Atualiza os Cards de KPIs
+   */
+  function atualizarKpisBolsista(total, pendentes, convertidos) {
+    document.getElementById('kpi-bolsista-total').textContent = total;
+    document.getElementById('kpi-bolsista-pendentes').textContent = pendentes;
+    document.getElementById('kpi-bolsista-convertidos').textContent = convertidos;
+  }
+
+ /**
+ * Envia a conversão informada e atualiza apenas a linha e os KPIs locais
+ */
+function salvarConversaoTombo(linha) {
+  const input = document.getElementById(`tombo-conv-${linha}`);
+  const btn = document.getElementById(`btn-salvar-${linha}`);
+  const tr = document.getElementById(`row-tombo-${linha}`);
+  if (!input || !btn || !tr) return;
+
+  const valorConvertido = input.value.trim();
+  const statusAnterior = tr.getAttribute('data-status');
+
+  if (!valorConvertido && statusAnterior === 'PENDENTE') {
+    if (!confirm("Deseja salvar este tombo em branco?")) return;
+  }
+
+  // Estágio de Carregamento
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  btn.style.cursor = 'wait';
+  btn.innerHTML = '⏳ Salvando...';
+  input.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      // Determina o novo status da linha
+      const novoStatus = valorConvertido ? 'CONVERTIDO' : 'PENDENTE';
+
+      // Atualiza os KPIs se houve mudança de status (de pendente para convertido ou vice-versa)
+      if (statusAnterior !== novoStatus) {
+        tr.setAttribute('data-status', novoStatus);
+        atualizarContadoresLocaisKPI(statusAnterior, novoStatus);
+      }
+
+      // Feedback visual instantâneo sem recarregar a tela
+      btn.style.background = '#0056b3';
+      btn.innerHTML = '✓ Salvo!';
+      
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+        btn.style.background = '#28a745';
+        btn.innerHTML = '💾 Salvar';
+        input.disabled = false;
+      }, 1200);
+    })
+    .withFailureHandler(function(err) {
+      alert("Erro ao salvar conversão: " + err.message);
+      
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.style.background = '#28a745';
+      btn.innerHTML = '💾 Salvar';
+      input.disabled = false;
+    })
+    .salvarTomboConvertido(linha, valorConvertido);
+}
+
+/**
+ * Atualiza os números dos cards de KPI instantaneamente
+ */
+function atualizarContadoresLocaisKPI(statusAnterior, novoStatus) {
+  const elPendentes = document.getElementById('kpi-bolsista-pendentes');
+  const elConvertidos = document.getElementById('kpi-bolsista-convertidos');
+  
+  if (!elPendentes || !elConvertidos) return;
+
+  let pendentes = parseInt(elPendentes.textContent || '0');
+  let convertidos = parseInt(elConvertidos.textContent || '0');
+
+  if (statusAnterior === 'PENDENTE' && novoStatus === 'CONVERTIDO') {
+    pendentes = Math.max(0, pendentes - 1);
+    convertidos++;
+  } else if (statusAnterior === 'CONVERTIDO' && novoStatus === 'PENDENTE') {
+    convertidos = Math.max(0, convertidos - 1);
+    pendentes++;
+  }
+
+  elPendentes.textContent = pendentes;
+  elConvertidos.textContent = convertidos;
+}
+</script>

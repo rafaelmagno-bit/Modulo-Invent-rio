@@ -1,0 +1,95 @@
+<!-- HUB DO PRESIDENTE / SUBSTITUTO -->
+<div id="screen-hub-presidente" class="screen-panel" style="display: none; padding: 20px;">
+  <h2 style="color: var(--ufpe-bordo, #333);">Painel da Comissão Setorial</h2>
+  <p style="color: #555; margin-bottom: 20px;">Selecione a ação desejada para gerenciar o levantamento da sua UG:</p>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+    <div onclick="abrirAtribuicaoUas()" style="background: white; padding: 25px 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; text-align: center; border-top: 5px solid #005A9C;">
+      <div style="font-size: 2em; margin-bottom: 10px;">👥</div>
+      <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">1. Atribuir UAs</h3>
+      <p style="color: #666; font-size: 0.9em; margin: 0;">Mapear e distribuir as Unidades para os membros da comissão.</p>
+    </div>
+
+    <div onclick="abrirVisaoMembro()" style="background: white; padding: 25px 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; text-align: center; border-top: 5px solid #FFC107;">
+      <div style="font-size: 2em; margin-bottom: 10px;">📋</div>
+      <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">2. Inventariar Bens</h3>
+      <p style="color: #666; font-size: 0.9em; margin: 0;">Acessar como membro para visualizar as UAs e cadastrar os bens.</p>
+    </div>
+
+    <div onclick="abrirRelatorioFinal()" style="background: white; padding: 25px 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer; text-align: center; border-top: 5px solid #28A745;">
+      <div style="font-size: 2em; margin-bottom: 10px;">📊</div>
+      <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">3. Finalizar e Emitir Relatório</h3>
+      <p style="color: #666; font-size: 0.9em; margin: 0;">Encerrar o levantamento físico da UG e emitir o relatório.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TELA DE ATRIBUIÇÃO DE UAs -->
+<div id="screen-atribuicao-comissao" style="display: none; max-width: 1100px; margin: 30px auto; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+    <div>
+      <h2 style="margin: 0; color: #800000;">Atribuição de UAs</h2>
+      <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">Defina os membros responsáveis pelo levantamento ou marque UAs sem carga patrimonial.</p>
+    </div>
+    <button onclick="voltarAoHubGestor()" style="padding: 8px 16px; background: #e0e0e0; color: #333; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">⬅ Voltar ao Hub</button>
+  </div>
+
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 14px;">
+    <thead>
+      <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
+        <th style="padding: 12px; width: 12%;">Código SIPAC</th>
+        <th style="padding: 12px; width: 38%;">Unidade Administrativa (UA)</th>
+        <th style="padding: 12px; width: 18%; text-align: center;">Sem Carga Patrimonial?</th>
+        <th style="padding: 12px; width: 32%;">Membro Responsável</th>
+      </tr>
+    </thead>
+    <tbody id="tbody-atribuicao-uas">
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 20px; color: #666;">⏳ Carregando UAs para atribuição...</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="text-align: right; border-top: 1px solid #eee; padding-top: 20px;">
+    <button onclick="salvarAtribuicaoUas()" style="padding: 12px 24px; background-color: #005A9C; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+      💾 Salvar Atribuições
+    </button>
+  </div>
+</div>
+
+<!-- TELA DE RESUMO E GESTÃO DO RELATÓRIO SETORIAL -->
+  <div id="screen-relatorio-setorial" style="display: none; max-width: 1000px; margin: 30px auto; padding: 25px; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px;">
+      <div>
+        <h2 style="margin: 0; color: var(--ufpe-bordo, #800000);">Relatório Setorial - Resumo da UG</h2>
+        <p id="rel-resumo-nome-ug" style="margin: 5px 0 0 0; color: #555; font-size: 14px; font-weight: bold;">Carregando...</p>
+      </div>
+      <button onclick="voltarAoHubGestor()" style="padding: 8px 16px; background: #e0e0e0; color: #333; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">⬅ Voltar ao Hub</button>
+    </div>
+
+    <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+      Confira abaixo a situação e a quantidade de bens de cada Unidade Administrativa (UA). Você pode alterar o <strong>Status</strong> de cada UA se necessário antes de emitir a versão final para impressão.
+    </p>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+      <thead>
+        <tr style="background-color: #f8f9fa; border-bottom: 2px solid #dee2e6; text-align: left;">
+          <th style="padding: 12px; width: 15%;">Código SIPAC</th>
+          <th style="padding: 12px; width: 45%;">Unidade Administrativa (UA)</th>
+          <th style="padding: 12px; width: 15%; text-align: center;">Qtd. Bens</th>
+          <th style="padding: 12px; width: 25%; text-align: center;">Status da UA</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-resumo-uas-gestor">
+        <tr>
+          <td colspan="4" style="text-align: center; padding: 20px; color: #666;">⏳ Carregando UAs e bens...</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="text-align: right; border-top: 1px solid #eee; padding-top: 20px;">
+      <button onclick="dispararImpressaoRelatorio()" style="padding: 12px 24px; background-color: var(--ufpe-bordo, #800000); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">
+        🖨️ Gerar e Imprimir Relatório Final
+      </button>
+    </div>
+  </div>
