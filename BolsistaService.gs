@@ -6,16 +6,12 @@
 var NOME_ABA_INVENTARIO = "INVENTARIO_BENS"; 
 
 /**
- * Busca apenas os tombamentos que possuem valor na Coluna G e estão atribuídos ao bolsista
+ * Busca apenas os tombamentos que possuem valor na Coluna G e estão atribuídos ao bolsista.
+ * Função de LEITURA PURA (não distribui mais nada ao ser chamada).
  */
 function getTombosBolsista(emailBolsista) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    
-    // 1. Executa a redistribuição equilibrada apenas de linhas com tombo original preenchido
-    distribuirTombosPendentes(ss);
-
-    // 2. Busca os tombos atribuídos ao bolsista logado
     var sheet = ss.getSheetByName(NOME_ABA_INVENTARIO);
     if (!sheet) return [];
 
@@ -56,9 +52,12 @@ function getTombosBolsista(emailBolsista) {
 }
 
 /**
- * Distribui apenas os bens que possuem tombo original (Coluna G) e sem bolsista atribuído
+ * Função para rodar UMA VEZ POR DIA via Acionador (Trigger).
+ * Distribui apenas os bens que possuem tombo original (Coluna G) e que estão com a Coluna S em branco.
+ * Preserva os itens que já foram atribuídos anteriormente.
  */
-function distribuirTombosPendentes(ss) {
+function distribuirTombosPendentes() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheetUsu = ss.getSheetByName("USUARIOS");
   var sheetInv = ss.getSheetByName(NOME_ABA_INVENTARIO);
   if (!sheetUsu || !sheetInv) return;
@@ -66,6 +65,7 @@ function distribuirTombosPendentes(ss) {
   var dataUsu = sheetUsu.getDataRange().getValues();
   var bolsistas = [];
 
+  // Obtém lista de e-mails de usuários cadastrados como BOLSISTA
   for (var u = 1; u < dataUsu.length; u++) {
     var perfil = String(dataUsu[u][2] || '').trim().toUpperCase(); // Coluna C (PERFIL)
     var email = String(dataUsu[u][0] || '').trim().toLowerCase(); // Coluna A (EMAIL)
@@ -80,15 +80,16 @@ function distribuirTombosPendentes(ss) {
   var lastRow = sheetInv.getLastRow();
   if (lastRow < 2) return;
 
-  var dataInv = sheetInv.getRange(2, 1, lastRow - 1, 20).getValues(); // Lê da Coluna A até T
+  // Lê da linha 2 em diante, Colunas A a T
+  var dataInv = sheetInv.getRange(2, 1, lastRow - 1, 20).getValues(); 
   var alterou = false;
   var indexBolsista = 0;
 
   for (var i = 0; i < dataInv.length; i++) {
-    var tomboOriginal = String(dataInv[i][6] || '').trim(); // Coluna G (índice 6)
+    var tomboOriginal = String(dataInv[i][6] || '').trim();  // Coluna G (índice 6)
     var bolsistaAtual = String(dataInv[i][18] || '').trim(); // Coluna S (índice 18)
     
-    // Só atribui bolsista se a Coluna G estiver preenchida E a Coluna S estiver em branco
+    // SÓ atribui bolsista se a Coluna G estiver preenchida E a Coluna S estiver VAZIA
     if (tomboOriginal && tomboOriginal !== '-' && !bolsistaAtual) {
       dataInv[i][18] = bolsistas[indexBolsista % bolsistas.length];
       indexBolsista++;
@@ -96,9 +97,13 @@ function distribuirTombosPendentes(ss) {
     }
   }
 
+  // Grava de volta na Coluna S (19) apenas se houve novos itens redistribuídos
   if (alterou) {
     var colunaSValores = dataInv.map(function(row) { return [row[18]]; });
     sheetInv.getRange(2, 19, colunaSValores.length, 1).setValues(colunaSValores);
+    Logger.log("Distribuição concluída. " + indexBolsista + " item(ns) atribuído(s).");
+  } else {
+    Logger.log("Nenhum item pendente para redistribuir.");
   }
 }
 
