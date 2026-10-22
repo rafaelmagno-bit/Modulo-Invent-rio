@@ -404,3 +404,68 @@ function obterListaServidores() {
     .map(function(row) { return row[0]; })
     .filter(function(nome) { return nome && nome.toString().trim() !== ''; });
 }
+
+/**
+ * Salva o novo status da UA na aba ORGANOGRAMA (Coluna F / Coluna 6)
+ * @param {string|number} codigoUA - Código da UA no SIPAC (Coluna A)
+ * @param {string} novoStatus - Novo status a ser gravado (Coluna F)
+ * @return {object} Resposta com status de sucesso ou erro
+ */
+function salvarStatusUA(codigoUA, novoStatus) {
+  // Utiliza LockService para evitar inconsistências em gravações simultâneas
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000); // Aguarda até 10s pela liberação de gravação
+  } catch (e) {
+    throw new Error("O sistema está ocupado. Tente salvar novamente em instantes.");
+  }
+
+  try {
+    if (!codigoUA || novoStatus === undefined) {
+      throw new Error("Código da UA ou Status não informados.");
+    }
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("ORGANOGRAMA");
+    
+    if (!sheet) {
+      throw new Error("Aba 'ORGANOGRAMA' não foi encontrada na planilha.");
+    }
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      throw new Error("Nenhum dado encontrado na aba ORGANOGRAMA.");
+    }
+
+    // Lê a Coluna A (Código da UA) e Coluna F (Status)
+    var rangeCodigoUA = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    var codigoProcurado = String(codigoUA).trim();
+    var linhaEncontrada = -1;
+
+    // Procura a linha onde o Código da UA (Coluna A) corresponde
+    for (var i = 0; i < rangeCodigoUA.length; i++) {
+      var codigoLinha = String(rangeCodigoUA[i][0]).trim();
+      if (codigoLinha === codigoProcurado) {
+        linhaEncontrada = i + 2; // +2 compensa cabeçalho (linha 1) e índice 0
+        break;
+      }
+    }
+
+    if (linhaEncontrada === -1) {
+      throw new Error("UA com o código '" + codigoUA + "' não foi encontrada no Organograma.");
+    }
+
+    // Coluna F = Coluna 6 no Apps Script (1-indexed: A=1, B=2, C=3, D=4, E=5, F=6)
+    sheet.getRange(linhaEncontrada, 6).setValue(String(novoStatus).trim());
+
+    return {
+      sucesso: true,
+      mensagem: "Status da UA atualizado com sucesso!"
+    };
+
+  } catch (e) {
+    throw new Error("Erro ao salvar status da UA: " + e.message);
+  } finally {
+    lock.releaseLock();
+  }
+}

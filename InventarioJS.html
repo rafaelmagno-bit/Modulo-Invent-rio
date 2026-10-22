@@ -431,5 +431,43 @@ function salvarEdicaoBem() {
     .atualizarBem(dados);
 }
 
+/**
+ * Captura o código da UA e o status selecionado e chama o backend
+ */
+function executarSalvarStatusUA() {
+  // Substitua 'codigoUAtual' pela variável ou data-attribute onde você guarda o código da UA em exibição
+  var codigoUA = $("#codigoUAEmExibicao").val() || codigoUAtual; 
+  var novoStatus = $("#selectStatusUA").val();
+
+  if (!codigoUA) {
+    alert("Erro: Nenhuma UA selecionada.");
+    return;
+  }
+
+  if (!novoStatus) {
+    alert("Por favor, selecione um status antes de salvar.");
+    return;
+  }
+
+  // Desabilita o botão para evitar cliques duplos durante o envio
+  var $btn = $("#btnSalvarStatusUA");
+  var textoOriginal = $btn.html();
+  $btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Salvando...');
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      $btn.prop("disabled", false).html(textoOriginal);
+      
+      // Exibe mensagem amigável de sucesso
+      alert(res.mensagem || "Status salvo com sucesso!");
+      
+      // Opcional: atualizar algum indicador visual na tela se necessário
+    })
+    .withFailureHandler(function(erro) {
+      $btn.prop("disabled", false).html(textoOriginal);
+      alert("Falha ao salvar: " + erro.message);
+    })
+    .salvarStatusUA(codigoUA, novoStatus);
+}
 
 </script>
