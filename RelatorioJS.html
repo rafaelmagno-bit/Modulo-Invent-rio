@@ -113,27 +113,60 @@ function renderizarRelatorioUg(res) {
 /**
  * Dispara a busca dos dados no backend e invoca a montagem do relatório oficial
  */
+function alternarLoadingBotaoRelatorio(ativo) {
+  const btn = document.getElementById('btn-gerar-relatorio-final');
+  if (btn) {
+    if (ativo) {
+      if (!btn.dataset.textoOriginal) {
+        btn.dataset.textoOriginal = btn.innerHTML;
+      }
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      btn.style.cursor = 'not-allowed';
+      btn.innerHTML = '<span style="display:inline-block; animation: spin 1s linear infinite;">⏳</span> Gerando relatório final...';
+    } else {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      btn.style.cursor = 'pointer';
+      btn.innerHTML = btn.dataset.textoOriginal || '🖨️ Gerar e Imprimir Relatório Final';
+    }
+  }
+
+  // Reutiliza o overlay global caso esteja carregado na tela
+  if (ativo && typeof exibirLoading === 'function') {
+    exibirLoading('Consolidando dados e gerando relatório oficial...');
+  } else if (!ativo && typeof ocultarLoading === 'function') {
+    ocultarLoading();
+  }
+}
+
 function dispararImpressaoRelatorio() {
   const termoUg = typeof obterUgAtiva === 'function' ? obterUgAtiva() : 'PROAD';
-
   if (!termoUg) {
     alert("Identificador da UG não encontrado.");
     return;
   }
 
+  // Ativa o loading imediatamente para bloquear novos cliques
+  alternarLoadingBotaoRelatorio(true);
+
   if (typeof google !== 'undefined' && google.script && google.script.run) {
     google.script.run
       .withSuccessHandler(function(res) {
         if (!res || !res.listaUas) {
+          alternarLoadingBotaoRelatorio(false);
           alert("Nenhum dado encontrado para gerar o relatório.");
           return;
         }
         emitirRelatorioSetorialOficial(res.listaUas, res.mapaBensPorUa, res.membros || [], termoUg);
       })
       .withFailureHandler(function(err) {
+        alternarLoadingBotaoRelatorio(false);
         alert("Erro ao buscar dados do relatório: " + err.message);
       })
       .obterDadosRelatorioUg(termoUg);
+  } else {
+    alternarLoadingBotaoRelatorio(false);
   }
 }
 
@@ -215,82 +248,59 @@ function emitirRelatorioSetorialOficial(listaUas, mapaBensPorUa, membros, siglaU
     `;
   });
 
-  // 4. Abre Janela para Impressão com Estilos do Documento Oficial
-  const janela = window.open('', '_blank', 'width=900,height=800');
-  janela.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>Inventário de Bens Móveis 2026 - ${siglaUg}</title>
-        <style>
-          @page { size: A4; margin: 15mm; }
-          body { font-family: Arial, sans-serif; font-size: 11px; color: #000; line-height: 1.3; }
-          
-          .cabecalho { text-align: center; margin-bottom: 20px; text-transform: uppercase; }
-          .cabecalho h1 { font-size: 14px; margin: 0; font-weight: bold; }
-          .cabecalho h2 { font-size: 12px; margin: 3px 0; font-weight: bold; }
-          .cabecalho h3 { font-size: 11px; margin: 0; font-weight: normal; }
+  // 4. Injeta o estilo de impressão uma única vez na página atual
+  if (!document.getElementById('estilo-impressao-relatorio')) {
+    const style = document.createElement('style');
+    style.id = 'estilo-impressao-relatorio';
+    style.innerHTML = `
+      #area-impressao-relatorio {
+        display: none;
+      }
+      @media print {
+        body > *:not(#area-impressao-relatorio) {
+          display: none !important;
+        }
+        #area-impressao-relatorio {
+          display: block !important;
+          position: static !important;
+          width: 100% !important;
+          background: #fff !important;
+          color: #000 !important;
+        }
+        @page {
+          size: A4 portrait;
+          margin: 15mm;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
-          .secao-titulo { font-weight: bold; margin-top: 15px; margin-bottom: 5px; text-transform: uppercase; font-size: 11px; }
+  // 5. Cria ou reutiliza o container do relatório no DOM da página atual
+  let containerRelatorio = document.getElementById('area-impressao-relatorio');
+  if (!containerRelatorio) {
+    containerRelatorio = document.createElement('div');
+    containerRelatorio.id = 'area-impressao-relatorio';
+    document.body.appendChild(containerRelatorio);
+  }
 
-          table { width: 100%; border-collapse: collapse; margin-bottom: 15px; page-break-inside: auto; }
-          tr { page-break-inside: avoid; page-break-after: auto; }
-          th, td { border: 1px solid #000; padding: 5px 6px; text-align: left; vertical-align: top; }
-          th { background-color: #f0f0f0; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+  // 6. Insere o conteúdo HTML do relatório (mantenha suas variáveis e estilos internos)
+  containerRelatorio.innerHTML = `
+    <style>
+      /* Cole aqui as classes CSS do seu relatório (tabelas, cabeçalho, bordas, etc.) */
+    </style>
+    <div class="documento-oficial">
+      <!-- Cole aqui o HTML do cabeçalho e tabelas do relatório -->
+      ${linhasMembros}
+      ${linhasResumoUas}
+      ${blocosBensAgrupados}
+    </div>
+  `;
 
-          .bloco-ua { margin-top: 15px; page-break-inside: avoid; }
-          .titulo-ua { font-weight: bold; margin-bottom: 4px; font-size: 11px; }
-        </style>
-      </head>
-      <body>
-        <div class="cabecalho">
-          <h1>UNIVERSIDADE FEDERAL DE PERNAMBUCO</h1>
-          <h2>UG: ${siglaUg}</h2>
-          <h3>Levantamento do Inventário de Bens Móveis 2026</h3>
-        </div>
-
-        <div class="secao-titulo">COMISSÃO SETORIAL DE INVENTÁRIO</div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 40%;">Nome do Membro</th>
-              <th style="width: 35%;">Função / Cargo na Comissão</th>
-              <th style="width: 25%;">SIAPE / Vínculo</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${linhasMembros}
-          </tbody>
-        </table>
-
-        <div class="secao-titulo">RESUMO DAS UNIDADES ADMINISTRATIVAS (UAS)</div>
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 15%;">Código SIPAC</th>
-              <th style="width: 55%;">Unidade Administrativa (UA)</th>
-              <th style="width: 12%; text-align: center;">Qtd. Bens</th>
-              <th style="width: 18%; text-align: center;">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${linhasResumoUas}
-          </tbody>
-        </table>
-
-        <div class="secao-titulo" style="margin-top: 25px;">DETALHAMENTO DOS BENS AGRUPADOS POR UA</div>
-        ${blocosBensAgrupados}
-
-      </body>
-    </html>
-  `);
-
-  janela.document.close();
-  janela.focus();
-
-  setTimeout(() => {
-    janela.print();
-  }, 500);
-}
+  // 7. Encerra o estado de loading e dispara a impressão nativa
+  setTimeout(function() {
+    alternarLoadingBotaoRelatorio(false);
+    window.print();
+  }, 200);
 
 </script>

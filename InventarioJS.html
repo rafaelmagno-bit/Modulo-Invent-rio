@@ -432,40 +432,69 @@ function salvarEdicaoBem() {
 }
 
 /**
- * Captura o código da UA e o status selecionado e chama o backend
+ * Salva o status da UA na aba ORGANOGRAMA com animação de Loading e sem dependência de jQuery
  */
 function executarSalvarStatusUA() {
-  // Substitua 'codigoUAtual' pela variável ou data-attribute onde você guarda o código da UA em exibição
-  var codigoUA = $("#codigoUAEmExibicao").val() || codigoUAtual; 
-  var novoStatus = $("#selectStatusUA").val();
-
-  if (!codigoUA) {
-    alert("Erro: Nenhuma UA selecionada.");
-    return;
-  }
+  // 1. Obtém o status selecionado
+  var selectStatus = document.getElementById('select-status-ua');
+  var novoStatus = selectStatus ? selectStatus.value : '';
 
   if (!novoStatus) {
     alert("Por favor, selecione um status antes de salvar.");
     return;
   }
 
-  // Desabilita o botão para evitar cliques duplos durante o envio
-  var $btn = $("#btnSalvarStatusUA");
-  var textoOriginal = $btn.html();
-  $btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Salvando...');
+  // 2. Extrai o Código SIPAC da UA a partir do texto do elemento '#txt-detalhe-ua-sub'
+  var codigoUA = null;
+  var subElement = document.getElementById('txt-detalhe-ua-sub');
+  
+  if (subElement && subElement.textContent) {
+    // Procura os dígitos após "SIPAC:" no texto (ex: SIPAC: 126928)
+    var match = subElement.textContent.match(/SIPAC:\s*(\d+)/i);
+    if (match) {
+      codigoUA = match[1];
+    }
+  }
 
+  // Fallback: caso exista uma variável global da UA
+  if (!codigoUA && typeof uaAtual !== 'undefined' && uaAtual) {
+    codigoUA = typeof uaAtual === 'object' ? (uaAtual.codigo || uaAtual.sipac) : uaAtual;
+  }
+
+  if (!codigoUA) {
+    alert("Erro: Não foi possível identificar o código SIPAC da UA atual.");
+    return;
+  }
+
+  var btn = document.getElementById('btnSalvarStatusUA');
+  if (!btn) return;
+
+  // 3. Ativa o Estado de LOADING no Botão
+  var htmlOriginal = btn.innerHTML;
+  btn.disabled = true;
+  btn.className = 'btn btn-sm btn-secondary d-inline-flex align-items-center gap-1';
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> <span>Salvando...</span>';
+
+  // 4. Executa a chamada para o Apps Script Backend
   google.script.run
     .withSuccessHandler(function(res) {
-      $btn.prop("disabled", false).html(textoOriginal);
-      
-      // Exibe mensagem amigável de sucesso
-      alert(res.mensagem || "Status salvo com sucesso!");
-      
-      // Opcional: atualizar algum indicador visual na tela se necessário
+      // Estado Visual de Sucesso
+      btn.className = 'btn btn-sm btn-success d-inline-flex align-items-center gap-1';
+      btn.innerHTML = '<i class="fas fa-check"></i> <span>Salvo!</span>';
+
+      // Retorna o botão ao estado normal após 2.5 segundos
+      setTimeout(function() {
+        btn.disabled = false;
+        btn.className = 'btn btn-sm btn-outline-primary fw-semibold d-inline-flex align-items-center gap-1';
+        btn.innerHTML = htmlOriginal;
+      }, 2500);
     })
     .withFailureHandler(function(erro) {
-      $btn.prop("disabled", false).html(textoOriginal);
-      alert("Falha ao salvar: " + erro.message);
+      // Restaura o botão em caso de falha
+      btn.disabled = false;
+      btn.className = 'btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1';
+      btn.innerHTML = htmlOriginal;
+      alert("Falha ao salvar status da UA: " + erro.message);
     })
     .salvarStatusUA(codigoUA, novoStatus);
 }

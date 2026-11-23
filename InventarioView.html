@@ -631,28 +631,43 @@
 <section id="screen-inventario" class="screen-panel" style="display: none;">
   <button class="btn-back-inv" onclick="voltarParaUas()">← Voltar para lista de UAs</button>
 
-  <div class="status-selector-box">
-    <div>
-      <h2 id="txt-detalhe-ua-nome" style="color: var(--ufpe-preto, #1a1a1a); font-size: 1.2rem;">Nome da UA</h2>
-      <p id="txt-detalhe-ua-sub" style="color: var(--ufpe-cinza-medio, #666666); font-size: 0.85rem;">SIPAC: - | UORG SIADS: -</p>
-    </div>
+  <div class="status-selector-box" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding: 12px; border-radius: 8px; background-color: #ffffff;">
+  
+  <!-- Nome e Subtítulo da UA -->
+  <div>
+    <h2 id="txt-detalhe-ua-nome" style="color: var(--ufpe-preto, #1a1a1a); font-size: 1.2rem; margin: 0;">Nome da UA</h2>
+    <p id="txt-detalhe-ua-sub" style="color: var(--ufpe-cinza-medio, #666666); font-size: 0.85rem; margin: 4px 0 0 0;">SIPAC: - | UORG SIADS: -</p>
+  </div>
 
-    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-      <div>
-        <label for="select-status-ua" style="font-weight: 700; font-size: 0.85rem; display: block;">Status do Inventário:</label>
-        <select id="select-status-ua" style="padding: 8px 12px; border-radius: 6px; font-weight: 600; border: 1px solid var(--ufpe-cinza-claro, #e2e8f0);" onchange="if(typeof alterarStatusUaAtiva === 'function') alterarStatusUaAtiva(this.value)">
-          <option value="Pendente">🟡 Pendente</option>
-          <option value="Em andamento">🔵 Em andamento</option>
-          <option value="Concluída">🟢 Concluída</option>
-          <option value="Não possui carga patrimonial">⚪ Não possui carga patrimonial</option>
-        </select>
-      </div>
+  <!-- Área de Ações (Status + Botão Salvar + Adicionar Bem) -->
+  <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+    
+    <!-- Grupo de Seleção do Status -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <label for="select-status-ua" style="font-weight: 700; font-size: 0.85rem; margin: 0; white-space: nowrap;">
+        Status do Inventário:
+      </label>
 
-      <button class="btn-add-bem" onclick="abrirModalNovoBem()">
-        ➕ Adicionar Novo Bem
+      <select id="select-status-ua" style="padding: 6px 12px; border-radius: 6px; font-weight: 600; border: 1px solid var(--ufpe-cinza-claro, #e2e8f0); font-size: 0.875rem;">
+        <option value="Pendente">🟡 Pendente</option>
+        <option value="Em andamento">🔵 Em andamento</option>
+        <option value="Concluída">🟢 Concluída</option>
+        <option value="Não possui carga patrimonial">⚪ Não possui carga patrimonial</option>
+      </select>
+
+      <button type="button" id="btnSalvarStatusUA" class="btn btn-sm btn-outline-primary fw-semibold d-inline-flex align-items-center gap-1" onclick="executarSalvarStatusUA()">
+        <i class="fas fa-save"></i>
+        <span>Salvar Status</span>
       </button>
     </div>
+
+    <!-- Botão de Adicionar Novo Bem -->
+    <button class="btn-add-bem" onclick="abrirModalNovoBem()">
+      ➕ Adicionar Novo Bem
+    </button>
+
   </div>
+</div>
 
   <div class="tabela-container">
   <table class="tabela-bens" style="width: 100%; border-collapse: collapse;">
